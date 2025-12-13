@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useLongPress } from "@uidotdev/usehooks";
 
 interface HoldButtonProps {
   onHoldStart: () => void;
@@ -15,67 +15,29 @@ export function HoldButton({
   isHolding,
   disabled = false,
 }: HoldButtonProps) {
-  const isActiveRef = useRef(false);
-  const targetRef = useRef<EventTarget | null>(null);
-
-  const preventDefault = useCallback((e: Event) => {
-    if (e.cancelable) {
-      e.preventDefault();
+  const attrs = useLongPress(
+    () => {
+      // Main callback - not used, we use onStart instead
+    },
+    {
+      onStart: () => {
+        if (!disabled) {
+          onHoldStart();
+        }
+      },
+      onFinish: () => {
+        onHoldEnd();
+      },
+      onCancel: () => {
+        onHoldEnd();
+      },
+      threshold: 999999, // We don't use the main callback
     }
-  }, []);
-
-  const handleStart = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
-      if (disabled || isActiveRef.current) return;
-
-      // Prevent default touch behaviors (scrolling, zooming, context menu)
-      if (e.target) {
-        e.target.addEventListener("touchend", preventDefault, { passive: false });
-        e.target.addEventListener("touchmove", preventDefault, { passive: false });
-        e.target.addEventListener("contextmenu", preventDefault);
-        targetRef.current = e.target;
-      }
-
-      isActiveRef.current = true;
-      onHoldStart();
-    },
-    [disabled, onHoldStart, preventDefault]
-  );
-
-  const handleEnd = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
-      if (!isActiveRef.current) return;
-
-      // Clean up event listeners
-      if (targetRef.current) {
-        targetRef.current.removeEventListener("touchend", preventDefault);
-        targetRef.current.removeEventListener("touchmove", preventDefault);
-        targetRef.current.removeEventListener("contextmenu", preventDefault);
-        targetRef.current = null;
-      }
-
-      isActiveRef.current = false;
-      onHoldEnd();
-    },
-    [onHoldEnd, preventDefault]
-  );
-
-  const handleCancel = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
-      // Same as handleEnd but for cancel/leave scenarios
-      handleEnd(e);
-    },
-    [handleEnd]
   );
 
   return (
     <button
-      onTouchStart={handleStart}
-      onTouchEnd={handleEnd}
-      onTouchCancel={handleCancel}
-      onMouseDown={handleStart}
-      onMouseUp={handleEnd}
-      onMouseLeave={handleCancel}
+      {...attrs}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       className={`

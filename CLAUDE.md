@@ -22,6 +22,10 @@ https://docs.base.org/mini-apps/llms-full.txt
 ### OnchainKit
 https://onchainkit.xyz/
 
+## パッケージマネージャー
+
+**pnpm を使用すること (npm/yarn 禁止)**
+
 ## コマンド
 
 ```bash
@@ -29,6 +33,7 @@ pnpm dev        # 開発サーバー (port 3333)
 pnpm build      # ビルド
 pnpm typecheck  # 型チェック
 pnpm lint       # ESLint
+pnpm add <pkg>  # パッケージ追加
 ```
 
 ## ディレクトリ構造
