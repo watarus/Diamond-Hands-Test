@@ -1,6 +1,6 @@
 "use client";
 
-import { useLongPress } from "@uidotdev/usehooks";
+import { useHold } from "@/hooks/useHold";
 
 interface HoldButtonProps {
   onHoldStart: () => void;
@@ -15,30 +15,16 @@ export function HoldButton({
   isHolding,
   disabled = false,
 }: HoldButtonProps) {
-  const attrs = useLongPress(
+  const holdHandlers = useHold(
     () => {
-      // Main callback - not used, we use onStart instead
+      if (!disabled) onHoldStart();
     },
-    {
-      onStart: () => {
-        if (!disabled) {
-          onHoldStart();
-        }
-      },
-      onFinish: () => {
-        onHoldEnd();
-      },
-      onCancel: () => {
-        onHoldEnd();
-      },
-      threshold: 999999, // We don't use the main callback
-    }
+    onHoldEnd
   );
 
   return (
     <button
-      {...attrs}
-      onContextMenu={(e) => e.preventDefault()}
+      {...holdHandlers}
       disabled={disabled}
       className={`
         hold-button
