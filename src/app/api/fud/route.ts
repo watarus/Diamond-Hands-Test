@@ -64,7 +64,7 @@ async function generateFudBatch(): Promise<string[]> {
 バッチ${i + 1}/5: ${i === 0 ? '価格暴落・市場崩壊系' : i === 1 ? '規制・法律・禁止系' : i === 2 ? 'ハッキング・セキュリティ・詐欺系' : i === 3 ? '取引所・企業倒産系' : '技術障害・ネットワーク問題系'}を中心に。`
           },
         ],
-        max_tokens: 4000,
+        max_tokens: 8000,
         temperature: 1.0,
       });
 

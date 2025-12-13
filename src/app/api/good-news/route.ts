@@ -66,7 +66,7 @@ async function generateGoodNewsBatch(): Promise<string[]> {
 バッチ${i + 1}/5: ${i === 0 ? '価格上昇・史上最高値系' : i === 1 ? '機関投資家・大企業参入系' : i === 2 ? 'プレイヤー称賛・握力系' : i === 3 ? '未来予想・ムーン系' : 'コミュニティ・技術進歩系'}を中心に。`
           },
         ],
-        max_tokens: 4000,
+        max_tokens: 8000,
         temperature: 1.0,
       });
 
