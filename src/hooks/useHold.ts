@@ -2,62 +2,49 @@
 
 import { useRef, useCallback } from "react";
 
-export const useHold = (
-  onHoldStart: () => void,
-  onHoldEnd: () => void
-) => {
-  const isHolding = useRef(false);
-  const target = useRef<EventTarget | null>(null);
+interface UseHoldOptions {
+  onStart?: () => void;
+  onEnd?: () => void;
+}
 
-  const preventDefault = useCallback((event: Event) => {
-    if ("touches" in event && (event as TouchEvent).touches.length < 2) {
-      event.preventDefault();
-    }
-  }, []);
+export const useHold = ({ onStart, onEnd }: UseHoldOptions = {}) => {
+  const isHoldingRef = useRef(false);
 
-  const start = useCallback(
-    (event: React.TouchEvent | React.MouseEvent) => {
-      if (isHolding.current) return;
+  const handleStart = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      // Prevent multi-touch
+      if ("touches" in e && e.touches.length > 1) return;
+      if (isHoldingRef.current) return;
 
-      // Prevent default touch behaviors
-      if (event.target) {
-        event.target.addEventListener("touchend", preventDefault, { passive: false });
-        event.target.addEventListener("touchmove", preventDefault, { passive: false });
-        event.target.addEventListener("contextmenu", preventDefault);
-        target.current = event.target;
-      }
-
-      isHolding.current = true;
-      onHoldStart();
+      isHoldingRef.current = true;
+      onStart?.();
     },
-    [onHoldStart, preventDefault]
+    [onStart]
   );
 
-  const end = useCallback(
-    () => {
-      if (!isHolding.current) return;
+  const handleEnd = useCallback(() => {
+    if (!isHoldingRef.current) return;
 
-      // Clean up event listeners
-      if (target.current) {
-        target.current.removeEventListener("touchend", preventDefault);
-        target.current.removeEventListener("touchmove", preventDefault);
-        target.current.removeEventListener("contextmenu", preventDefault);
-        target.current = null;
-      }
+    isHoldingRef.current = false;
+    onEnd?.();
+  }, [onEnd]);
 
-      isHolding.current = false;
-      onHoldEnd();
-    },
-    [onHoldEnd, preventDefault]
-  );
+  const handleCancel = useCallback(() => {
+    if (!isHoldingRef.current) return;
+
+    isHoldingRef.current = false;
+    onEnd?.();
+  }, [onEnd]);
 
   return {
-    onMouseDown: (e: React.MouseEvent) => start(e),
-    onTouchStart: (e: React.TouchEvent) => start(e),
-    onMouseUp: () => end(),
-    onMouseLeave: () => end(),
-    onTouchEnd: () => end(),
-    onTouchCancel: () => end(),
-    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    handlers: {
+      onTouchStart: handleStart,
+      onTouchEnd: handleEnd,
+      onTouchCancel: handleCancel,
+      onMouseDown: handleStart,
+      onMouseUp: handleEnd,
+      onMouseLeave: handleCancel,
+    },
+    getIsHolding: () => isHoldingRef.current,
   };
 };

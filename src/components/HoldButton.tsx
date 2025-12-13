@@ -15,20 +15,32 @@ export function HoldButton({
   isHolding,
   disabled = false,
 }: HoldButtonProps) {
-  const holdHandlers = useHold(
-    () => {
+  const { handlers } = useHold({
+    onStart: () => {
       if (!disabled) onHoldStart();
     },
-    onHoldEnd
-  );
+    onEnd: () => {
+      onHoldEnd();
+    },
+  });
 
   return (
     <button
-      {...holdHandlers}
+      {...handlers}
       disabled={disabled}
+      style={{
+        width: "256px",
+        height: "256px",
+        borderRadius: "50%",
+        border: "none",
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+        outline: "none",
+      }}
       className={`
         hold-button
-        w-64 h-64 rounded-full
         flex items-center justify-center
         text-3xl font-bold uppercase tracking-wider
         transition-all duration-200
@@ -40,12 +52,6 @@ export function HoldButton({
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
       `}
-      style={{
-        touchAction: "none",
-        WebkitTouchCallout: "none",
-        WebkitUserSelect: "none",
-        userSelect: "none",
-      }}
     >
       {isHolding ? (
         <span className="animate-pulse">HOLDING...</span>
