@@ -16,10 +16,15 @@ export function HoldButton({
   disabled = false,
 }: HoldButtonProps) {
   const { handlers } = useHold({
+    moveThreshold: 50, // 50px tolerance for finger movement
     onStart: () => {
       if (!disabled) onHoldStart();
     },
-    onEnd: () => {
+    onSuccess: () => {
+      onHoldEnd();
+    },
+    onFail: (reason) => {
+      console.log("Hold failed:", reason);
       onHoldEnd();
     },
   });
