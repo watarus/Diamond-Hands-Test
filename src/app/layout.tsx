@@ -34,13 +34,20 @@ export const metadata: Metadata = {
     // Base Mini App
     "base:app_id": "693d0dc0d77c069a945bde48",
     // Farcaster Mini App embed metadata
-    "fc:miniapp": `${SITE_URL}/.well-known/farcaster.json`,
-    // Farcaster Frame metadata
-    "fc:frame": "vNext",
-    "fc:frame:image": `${SITE_URL}/api/og`,
-    "fc:frame:button:1": "Play Diamond Hands Test",
-    "fc:frame:button:1:action": "link",
-    "fc:frame:button:1:target": SITE_URL,
+    "fc:miniapp": JSON.stringify({
+      version: "next",
+      imageUrl: `${SITE_URL}/api/og`,
+      button: {
+        title: "Play Diamond Hands Test",
+        action: {
+          type: "launch_miniapp",
+          name: "Diamond Hands Test",
+          url: SITE_URL,
+          splashImageUrl: `${SITE_URL}/api/og`,
+          splashBackgroundColor: "#0a0a0a",
+        },
+      },
+    }),
   },
 };
 
