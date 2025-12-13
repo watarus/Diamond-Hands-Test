@@ -28,21 +28,31 @@ function ShareButton({
     : `${timeStr}で心が折れた...`;
 
   const handleShare = async () => {
-    let url = "";
     if (platform === "base") {
       const text = `${emoji} ${title}! ${resultText} - Diamond Hands Test on Base`;
-      url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(resultUrl)}`;
+      const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(resultUrl)}`;
+      try {
+        await sdk.actions.openUrl(url);
+      } catch {
+        window.open(url, "_blank");
+      }
     } else {
-      // Twitter - simpler text format
-      const text = `${emoji} ${title}! ${timeStr} ${isDiamondHands ? "FUDに耐え抜いた！" : "で心が折れた..."} #DiamondHandsTest #Base`;
-      url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(resultUrl)}`;
-    }
+      // Twitter/X - use native app URL scheme
+      const text = `${emoji} ${title}! ${timeStr} ${isDiamondHands ? "FUDに耐え抜いた！" : "で心が折れた..."} #DiamondHandsTest #Base ${resultUrl}`;
+      // Try native X app first, then fall back to web
+      const nativeUrl = `twitter://post?message=${encodeURIComponent(text)}`;
+      const webUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
 
-    // Use SDK to open URL if in Mini App context, otherwise fallback to window.open
-    try {
-      await sdk.actions.openUrl(url);
-    } catch {
-      window.open(url, "_blank");
+      // On mobile, try native app
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        window.location.href = nativeUrl;
+        // If native app doesn't open after a short delay, open web version
+        setTimeout(() => {
+          window.open(webUrl, "_blank");
+        }, 1500);
+      } else {
+        window.open(webUrl, "_blank");
+      }
     }
   };
 

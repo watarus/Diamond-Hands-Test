@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 interface HoldButtonProps {
   onHoldStart: () => void;
@@ -16,79 +16,56 @@ export function HoldButton({
   disabled = false,
 }: HoldButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const isHoldingRef = useRef(isHolding);
+  const isPressedRef = useRef(false);
 
-  // Keep ref in sync with prop
   useEffect(() => {
-    isHoldingRef.current = isHolding;
-  }, [isHolding]);
+    const button = buttonRef.current;
+    if (!button) return;
 
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       e.preventDefault();
-      if (!disabled) {
-        onHoldStart();
-      }
-    },
-    [disabled, onHoldStart]
-  );
+      if (disabled) return;
 
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      onHoldEnd();
-    },
-    [onHoldEnd]
-  );
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (!disabled) {
-        onHoldStart();
-      }
-    },
-    [disabled, onHoldStart]
-  );
-
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onHoldEnd();
-    },
-    [onHoldEnd]
-  );
-
-  // Handle touch/mouse events outside the button
-  useEffect(() => {
-    const handleGlobalEnd = () => {
-      if (isHoldingRef.current) {
-        onHoldEnd();
-      }
+      isPressedRef.current = true;
+      // Capture pointer to receive events even if pointer leaves element
+      button.setPointerCapture(e.pointerId);
+      onHoldStart();
     };
 
-    // For mouse
-    window.addEventListener("mouseup", handleGlobalEnd);
+    const handlePointerUp = (e: PointerEvent) => {
+      e.preventDefault();
+      if (!isPressedRef.current) return;
 
-    // For touch - use passive: false to allow preventDefault if needed
-    window.addEventListener("touchend", handleGlobalEnd, { passive: true });
-    window.addEventListener("touchcancel", handleGlobalEnd, { passive: true });
+      isPressedRef.current = false;
+      button.releasePointerCapture(e.pointerId);
+      onHoldEnd();
+    };
+
+    const handlePointerCancel = (e: PointerEvent) => {
+      if (!isPressedRef.current) return;
+
+      isPressedRef.current = false;
+      button.releasePointerCapture(e.pointerId);
+      onHoldEnd();
+    };
+
+    // Use native event listeners for better control
+    button.addEventListener("pointerdown", handlePointerDown);
+    button.addEventListener("pointerup", handlePointerUp);
+    button.addEventListener("pointercancel", handlePointerCancel);
+    button.addEventListener("lostpointercapture", handlePointerCancel);
 
     return () => {
-      window.removeEventListener("mouseup", handleGlobalEnd);
-      window.removeEventListener("touchend", handleGlobalEnd);
-      window.removeEventListener("touchcancel", handleGlobalEnd);
+      button.removeEventListener("pointerdown", handlePointerDown);
+      button.removeEventListener("pointerup", handlePointerUp);
+      button.removeEventListener("pointercancel", handlePointerCancel);
+      button.removeEventListener("lostpointercapture", handlePointerCancel);
     };
-  }, [onHoldEnd]);
+  }, [disabled, onHoldStart, onHoldEnd]);
 
   return (
     <button
       ref={buttonRef}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       className={`
