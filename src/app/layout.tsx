@@ -33,6 +33,8 @@ export const metadata: Metadata = {
   other: {
     // Base Mini App
     "base:app_id": "693d0dc0d77c069a945bde48",
+    // Farcaster Mini App embed metadata
+    "fc:miniapp": `${SITE_URL}/.well-known/farcaster.json`,
     // Farcaster Frame metadata
     "fc:frame": "vNext",
     "fc:frame:image": `${SITE_URL}/api/og`,

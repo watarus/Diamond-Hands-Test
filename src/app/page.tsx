@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useGame } from "@/hooks/useGame";
 import { useMint } from "@/hooks/useMint";
+import { useFrameSDK } from "@/hooks/useFrameSDK";
 import { HoldButton } from "@/components/HoldButton";
 import { Timer } from "@/components/Timer";
 import { FudTicker } from "@/components/FudTicker";
@@ -11,6 +12,7 @@ import { ResultScreen } from "@/components/ResultScreen";
 import { ConnectWallet } from "@/components/ConnectWallet";
 
 export default function Home() {
+  const { isSDKLoaded } = useFrameSDK();
   const { isConnected, address } = useAccount();
   const {
     gameState,
