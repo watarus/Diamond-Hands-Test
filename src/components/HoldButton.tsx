@@ -16,9 +16,15 @@ export function HoldButton({
   disabled = false,
 }: HoldButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const isHoldingRef = useRef(isHolding);
 
-  const handleStart = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
+  // Keep ref in sync with prop
+  useEffect(() => {
+    isHoldingRef.current = isHolding;
+  }, [isHolding]);
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
       e.preventDefault();
       if (!disabled) {
         onHoldStart();
@@ -27,40 +33,62 @@ export function HoldButton({
     [disabled, onHoldStart]
   );
 
-  const handleEnd = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
       e.preventDefault();
-      if (isHolding) {
-        onHoldEnd();
-      }
+      onHoldEnd();
     },
-    [isHolding, onHoldEnd]
+    [onHoldEnd]
   );
 
-  // Handle mouse leaving the button while holding
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (!disabled) {
+        onHoldStart();
+      }
+    },
+    [disabled, onHoldStart]
+  );
+
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      onHoldEnd();
+    },
+    [onHoldEnd]
+  );
+
+  // Handle touch/mouse events outside the button
   useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      if (isHolding) {
+    const handleGlobalEnd = () => {
+      if (isHoldingRef.current) {
         onHoldEnd();
       }
     };
 
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    window.addEventListener("touchend", handleGlobalMouseUp);
+    // For mouse
+    window.addEventListener("mouseup", handleGlobalEnd);
+
+    // For touch - use passive: false to allow preventDefault if needed
+    window.addEventListener("touchend", handleGlobalEnd, { passive: true });
+    window.addEventListener("touchcancel", handleGlobalEnd, { passive: true });
 
     return () => {
-      window.removeEventListener("mouseup", handleGlobalMouseUp);
-      window.removeEventListener("touchend", handleGlobalMouseUp);
+      window.removeEventListener("mouseup", handleGlobalEnd);
+      window.removeEventListener("touchend", handleGlobalEnd);
+      window.removeEventListener("touchcancel", handleGlobalEnd);
     };
-  }, [isHolding, onHoldEnd]);
+  }, [onHoldEnd]);
 
   return (
     <button
       ref={buttonRef}
-      onMouseDown={handleStart}
-      onMouseUp={handleEnd}
-      onTouchStart={handleStart}
-      onTouchEnd={handleEnd}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       className={`
@@ -69,7 +97,7 @@ export function HoldButton({
         flex items-center justify-center
         text-3xl font-bold uppercase tracking-wider
         transition-all duration-200
-        select-none touch-none
+        select-none
         ${
           isHolding
             ? "bg-diamond text-black scale-95 holding"
@@ -77,6 +105,7 @@ export function HoldButton({
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
       `}
+      style={{ touchAction: "none" }}
     >
       {isHolding ? (
         <span className="animate-pulse">HOLDING...</span>
