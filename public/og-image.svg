@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <rect x="40" y="40" width="1120" height="550" rx="40" fill="url(#gradient)"/>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD700;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <text x="600" y="200" font-size="100" text-anchor="middle" fill="#0a0a0a">💎🙌</text>
+  <text x="600" y="320" font-size="64" font-weight="bold" fill="#0a0a0a" text-anchor="middle" font-family="system-ui, sans-serif">Diamond Hands Test</text>
+  <text x="600" y="400" font-size="32" fill="#333" text-anchor="middle" font-family="system-ui, sans-serif">FUDに耐えて握力を証明せよ</text>
+  <text x="600" y="520" font-size="24" fill="#333" text-anchor="middle" font-family="system-ui, sans-serif">Built on Base</text>
+</svg>

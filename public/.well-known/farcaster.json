@@ -1,0 +1,25 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjAsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIn0",
+    "payload": "eyJkb21haW4iOiJleGFtcGxlLmNvbSJ9",
+    "signature": "REPLACE_WITH_YOUR_SIGNATURE"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Diamond Hands Test",
+    "homeUrl": "https://your-domain.vercel.app",
+    "iconUrl": "https://your-domain.vercel.app/icon.png",
+    "splashImageUrl": "https://your-domain.vercel.app/splash.png",
+    "splashBackgroundColor": "#0a0a0a",
+    "subtitle": "FUDに耐えて握力を証明せよ",
+    "description": "ボタンを長押しし続ける耐久ゲーム。60秒以上耐えればDiamond Hands NFT、途中で離したらPaper Hands SBTが発行される。",
+    "screenshotUrls": [],
+    "primaryCategory": "games",
+    "tags": ["game", "nft", "base", "fud", "diamond-hands"],
+    "heroImageUrl": "https://your-domain.vercel.app/hero.png",
+    "tagline": "あなたの握力をBaseチェーンに刻め",
+    "ogTitle": "Diamond Hands Test",
+    "ogDescription": "FUDに耐えてボタンを押し続けろ。あなたの握力を証明するミニアプリ。",
+    "ogImageUrl": "https://your-domain.vercel.app/og-image.png"
+  }
+}
