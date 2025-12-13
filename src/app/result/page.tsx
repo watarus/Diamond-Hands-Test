@@ -5,23 +5,37 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3333");
 
 type Props = {
-  searchParams: Promise<{ duration?: string }>;
+  searchParams: Promise<{ duration?: string; minted?: string; fuds?: string }>;
 };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const params = await searchParams;
   const duration = parseInt(params.duration || "0");
   const isDiamond = duration >= 60;
+  const minted = params.minted === "true";
+  const fuds = params.fuds || "";
 
   const mins = Math.floor(duration / 60);
   const secs = duration % 60;
   const timeStr = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
   const title = isDiamond ? "💎 Diamond Hands!" : "📄 Paper Hands...";
-  const description = isDiamond
-    ? `${timeStr} FUDに耐え抜いた！`
-    : `${timeStr}で心が折れた...`;
-  const ogImageUrl = `${SITE_URL}/api/og?duration=${duration}`;
+  const description = minted
+    ? isDiamond
+      ? `${timeStr} FUDに耐え抜いた！ NFT Minted on Base`
+      : `${timeStr}で心が折れた... SBT Minted on Base`
+    : isDiamond
+      ? `${timeStr} FUDに耐え抜いた！`
+      : `${timeStr}で心が折れた...`;
+
+  // Build OG image URL with minted and fuds params
+  let ogImageUrl = `${SITE_URL}/api/og?duration=${duration}`;
+  if (minted) {
+    ogImageUrl += "&minted=true";
+    if (fuds) {
+      ogImageUrl += `&fuds=${encodeURIComponent(fuds)}`;
+    }
+  }
 
   return {
     title,

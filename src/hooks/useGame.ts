@@ -7,7 +7,7 @@ export type GameState = "idle" | "holding" | "released";
 export interface GameResult {
   duration: number;
   isDiamondHands: boolean;
-  fudMessages: string[];
+  messages: string[]; // FUD (< 60s) or Good News (>= 60s)
 }
 
 const DIAMOND_HANDS_THRESHOLD = 60; // 60秒以上でDiamond Hands
@@ -16,15 +16,14 @@ export function useGame() {
   const [gameState, setGameState] = useState<GameState>("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
-  const [shownFudMessages, setShownFudMessages] = useState<string[]>([]);
+  const [shownMessages, setShownMessages] = useState<string[]>([]);
 
   const startTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Add a FUD message to the list (called by FudTicker)
-  const addFudMessage = useCallback((message: string) => {
-    setShownFudMessages((prev) => {
-      // Avoid duplicates and keep last 20
+  // Add a message to the list (FUD or Good News)
+  const addMessage = useCallback((message: string) => {
+    setShownMessages((prev) => {
       if (prev.includes(message)) return prev;
       return [...prev, message].slice(-20);
     });
@@ -34,7 +33,7 @@ export function useGame() {
     setGameState("holding");
     setElapsedTime(0);
     setResult(null);
-    setShownFudMessages([]);
+    setShownMessages([]);
     startTimeRef.current = Date.now();
 
     timerRef.current = setInterval(() => {
@@ -59,9 +58,9 @@ export function useGame() {
     setResult({
       duration: finalTime,
       isDiamondHands: finalTime >= DIAMOND_HANDS_THRESHOLD,
-      fudMessages: shownFudMessages,
+      messages: shownMessages,
     });
-  }, [shownFudMessages]);
+  }, [shownMessages]);
 
   const resetGame = useCallback(() => {
     if (timerRef.current) {
@@ -90,7 +89,7 @@ export function useGame() {
     startGame,
     endGame,
     resetGame,
-    addFudMessage,
+    addMessage,
     DIAMOND_HANDS_THRESHOLD,
   };
 }

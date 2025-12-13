@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "@/providers/Providers";
 
 // Vercel provides VERCEL_URL for preview deployments
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL
-  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3333");
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3333")).trim();
 
 export const metadata: Metadata = {
   title: "Diamond Hands Test 💎🙌",
@@ -33,21 +33,6 @@ export const metadata: Metadata = {
   other: {
     // Base Mini App
     "base:app_id": "693d0dc0d77c069a945bde48",
-    // Farcaster Mini App embed metadata
-    "fc:miniapp": JSON.stringify({
-      version: "next",
-      imageUrl: `${SITE_URL}/api/og`,
-      button: {
-        title: "Play Diamond Hands Test",
-        action: {
-          type: "launch_miniapp",
-          name: "Diamond Hands Test",
-          url: SITE_URL,
-          splashImageUrl: `${SITE_URL}/api/og`,
-          splashBackgroundColor: "#0a0a0a",
-        },
-      },
-    }),
   },
 };
 

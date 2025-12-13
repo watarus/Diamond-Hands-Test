@@ -78,6 +78,9 @@ NEXT_PUBLIC_SITE_URL=         # デプロイURL (必須)
 NEXT_PUBLIC_ONCHAINKIT_API_KEY=  # OnchainKit API Key
 OPENROUTER_API_KEY=           # OpenRouter API Key
 NEXT_PUBLIC_WC_PROJECT_ID=    # WalletConnect Project ID
+
+# Vercel Blob (FUDキャッシュ用)
+BLOB_READ_WRITE_TOKEN=        # Vercel Blobのトークン
 ```
 
 ## ゲームルール

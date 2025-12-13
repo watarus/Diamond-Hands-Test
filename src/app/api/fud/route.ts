@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { put, list } from "@vercel/blob";
+import { FALLBACK_FUDS } from "@/lib/fallback-fuds";
 
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -23,69 +25,159 @@ const SYSTEM_PROMPT = `あなたは仮想通貨市場の悲観的なニュース
    - ラグプル・詐欺ニュース
    - クジラの大量売却ニュース
 
-**重要**: 各ヘッドラインは1行で、改行で区切って出力すること。`;
+**重要**: 各ヘッドラインは1行で、番号なしで出力すること。`;
 
-// FUDキャッシュ
-let fudCache: string[] = [];
-let lastGenerated = 0;
-const CACHE_DURATION = 60000; // 1分間キャッシュ
+// Blob設定
+const BLOB_FILENAME = "fud-cache.json";
+const CACHE_MAX_AGE = 86400 * 1000; // 24時間（ミリ秒）
+const BATCH_SIZE = 10;
 
-const FALLBACK_FUDS = [
-  "🚨 速報: ビットコイン、1時間で30%暴落",
-  "⚠️ SECがCoinbaseを提訴、全取引所閉鎖の危機",
-  "🔴 あなたのウォレットがハッキングされました",
-  "📉 イーサリアム創設者が全ETHを売却",
-  "💀 Base チェーン、51%攻撃を受ける",
-  "🚨 Binanceが破産申請を検討中",
-  "⚠️ 米国、仮想通貨全面禁止法案を可決",
-  "🔴 Tether、準備金不足で崩壊の兆し",
-  "📉 NFT市場、99.9%の価値を失う",
-  "💀 主要取引所がハッキングされ全資産流出",
-];
+// インメモリキャッシュ（Blob読み込み回数削減）
+let memoryCache: { fuds: string[]; timestamp: number } | null = null;
+let isGenerating = false;
 
+/**
+ * LLMで大量のFUDを生成
+ */
 async function generateFudBatch(): Promise<string[]> {
   if (!process.env.OPENROUTER_API_KEY) {
-    return FALLBACK_FUDS;
+    console.log("No API key, using fallback");
+    return [...FALLBACK_FUDS];
   }
 
+  console.log("Generating 500 FUDs from LLM...");
+
   try {
-    const completion = await openai.chat.completions.create({
-      model: "x-ai/grok-4.1-fast",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: "仮想通貨の恐怖を煽るニュースヘッドラインを20個生成してください。それぞれ違う内容で、バラエティ豊かに。1行1ヘッドライン。" },
-      ],
-      max_tokens: 1000,
-      temperature: 1.0,
-    });
+    const allFuds: string[] = [];
 
-    const content = completion.choices[0]?.message?.content?.trim() || "";
-    const fuds = content
-      .split("\n")
-      .map(line => line.trim())
-      .filter(line => line.length > 0 && line.includes(""));
+    // 5回に分けて100個ずつ生成（合計500個）
+    for (let i = 0; i < 5; i++) {
+      const completion = await openai.chat.completions.create({
+        model: "x-ai/grok-4.1-fast",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `仮想通貨の恐怖を煽るニュースヘッドラインを100個生成してください。
+それぞれ違う内容で、バラエティ豊かに。1行1ヘッドライン、番号不要。
+バッチ${i + 1}/5: ${i === 0 ? '価格暴落・市場崩壊系' : i === 1 ? '規制・法律・禁止系' : i === 2 ? 'ハッキング・セキュリティ・詐欺系' : i === 3 ? '取引所・企業倒産系' : '技術障害・ネットワーク問題系'}を中心に。`
+          },
+        ],
+        max_tokens: 4000,
+        temperature: 1.0,
+      });
 
-    // フォールバックと合わせる
-    return fuds.length > 5 ? fuds : [...fuds, ...FALLBACK_FUDS];
+      const content = completion.choices[0]?.message?.content?.trim() || "";
+      const fuds = content
+        .split("\n")
+        .map(line => line.trim().replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, ""))
+        .filter(line => line.length > 10 && line.length < 60);
+
+      allFuds.push(...fuds);
+      console.log(`Batch ${i + 1}/5: ${fuds.length} FUDs generated`);
+    }
+
+    console.log(`Total LLM FUDs: ${allFuds.length}`);
+
+    // フォールバックと合わせて重複除去
+    const combined = [...new Set([...allFuds, ...FALLBACK_FUDS])];
+    return combined;
   } catch (error) {
     console.error("FUD batch generation error:", error);
-    return FALLBACK_FUDS;
+    return [...FALLBACK_FUDS];
+  }
+}
+
+/**
+ * キャッシュからランダムにN個抽出（重複なし）
+ */
+function getRandomFuds(pool: string[], count: number): string[] {
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+/**
+ * Blobからキャッシュ読み込み
+ */
+async function loadFromBlob(): Promise<{ fuds: string[]; timestamp: number } | null> {
+  try {
+    const { blobs } = await list({ prefix: BLOB_FILENAME });
+    if (blobs.length === 0) return null;
+
+    const blob = blobs[0];
+    const response = await fetch(blob.url);
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Blob read error:", error);
+    return null;
+  }
+}
+
+/**
+ * Blobにキャッシュ保存
+ */
+async function saveToBlob(fuds: string[]): Promise<void> {
+  try {
+    const data = { fuds, timestamp: Date.now() };
+    await put(BLOB_FILENAME, JSON.stringify(data), {
+      access: "public",
+      addRandomSuffix: false,
+    });
+    console.log(`Blob saved: ${fuds.length} FUDs`);
+  } catch (error) {
+    console.error("Blob write error:", error);
+  }
+}
+
+/**
+ * バックグラウンドでFUD生成してBlobに保存
+ */
+async function generateAndCacheInBackground() {
+  if (isGenerating) return;
+  isGenerating = true;
+
+  try {
+    const fuds = await generateFudBatch();
+    if (fuds.length > 0) {
+      await saveToBlob(fuds);
+      memoryCache = { fuds, timestamp: Date.now() };
+    }
+  } catch (error) {
+    console.error("Background generation error:", error);
+  } finally {
+    isGenerating = false;
   }
 }
 
 export async function GET() {
   const now = Date.now();
 
-  // キャッシュが古いか空なら再生成
-  if (fudCache.length === 0 || now - lastGenerated > CACHE_DURATION) {
-    console.log("Generating new FUD batch...");
-    fudCache = await generateFudBatch();
-    lastGenerated = now;
-    console.log(`Generated ${fudCache.length} FUDs`);
+  try {
+    // 1. インメモリキャッシュチェック
+    if (memoryCache && (now - memoryCache.timestamp) < CACHE_MAX_AGE) {
+      return NextResponse.json({ fuds: getRandomFuds(memoryCache.fuds, BATCH_SIZE) });
+    }
+
+    // 2. Blobからキャッシュ読み込み
+    const blobCache = await loadFromBlob();
+    if (blobCache && (now - blobCache.timestamp) < CACHE_MAX_AGE) {
+      memoryCache = blobCache; // インメモリにも保存
+      return NextResponse.json({ fuds: getRandomFuds(blobCache.fuds, BATCH_SIZE) });
+    }
+
+    // 3. キャッシュなし/期限切れ → フォールバック返してバックグラウンド生成
+    const fallbackResponse = getRandomFuds(FALLBACK_FUDS, BATCH_SIZE);
+
+    if (!isGenerating) {
+      generateAndCacheInBackground().catch(console.error);
+    }
+
+    return NextResponse.json({ fuds: fallbackResponse });
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json({ fuds: getRandomFuds(FALLBACK_FUDS, BATCH_SIZE) });
   }
-
-  // ランダムに1つ返す
-  const fud = fudCache[Math.floor(Math.random() * fudCache.length)];
-
-  return NextResponse.json({ fud });
 }

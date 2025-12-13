@@ -13,76 +13,146 @@ interface FudMessage {
 interface FudTickerProps {
   isActive: boolean;
   elapsedTime: number;
-  onFudShown?: (message: string) => void;
+  onMessageShown?: (message: string) => void;
 }
 
-// Fallback FUD messages when API is not available
-const FALLBACK_FUDS = [
+// ローカルフォールバック（API失敗時用）
+const LOCAL_FALLBACK = [
   "🚨 速報: ビットコイン、1時間で30%暴落",
   "⚠️ SECがCoinbaseを提訴、全取引所閉鎖の危機",
   "🔴 あなたのウォレットがハッキングされました",
   "📉 イーサリアム創設者が全ETHを売却",
   "💀 Base チェーン、51%攻撃を受ける",
-  "🚨 Binanceが破産申請を検討中",
-  "⚠️ 米国、仮想通貨全面禁止法案を可決",
-  "🔴 Tether、準備金不足で崩壊の兆し",
-  "📉 NFT市場、99.9%の価値を失う",
-  "💀 主要取引所がハッキングされ全資産流出",
-  "🚨 中国、マイニングを完全禁止",
-  "⚠️ あなたの秘密鍵が流出しています",
-  "🔴 仮想通貨冬の時代、さらに5年続く見込み",
-  "📉 ステーブルコイン全種がデペッグ",
-  "💀 DeFiプロトコルで$500M規模のエクスプロイト",
-  "🚨 ETF申請、全て却下される",
-  "⚠️ 大口クジラが大量売り開始",
-  "🔴 マイニング報酬、明日からゼロに",
-  "📉 取引手数料が10倍に高騰",
-  "💀 主要ブリッジがハッキング、資金凍結",
 ];
 
-export function FudTicker({ isActive, elapsedTime, onFudShown }: FudTickerProps) {
-  const [messages, setMessages] = useState<FudMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const messageIdRef = useRef(0);
-  const lastFetchRef = useRef(0);
+// 60秒超えたら良いニュース（フォールバック）
+const GOOD_NEWS_FALLBACK = [
+  "🚀 ビットコイン、史上最高値を更新！",
+  "💎 あなたは真のダイヤモンドハンズだ！",
+  "🎉 Base、取引量で全チェーン1位に！",
+  "✨ ETH ETF承認、機関投資家が殺到！",
+  "🌟 あなたの握力は伝説級です！",
+  "💰 クジラがBTCを大量購入中！",
+  "🔥 NFT市場が再び活況！",
+  "⭐ Coinbase株が急騰！",
+  "🏆 FUDに負けなかった勇者よ！",
+  "💫 暗号資産の未来は明るい！",
+];
 
-  // Fetch FUD from API
-  const fetchFud = useCallback(async (): Promise<string> => {
+export function FudTicker({ isActive, elapsedTime, onMessageShown }: FudTickerProps) {
+  const [messages, setMessages] = useState<FudMessage[]>([]);
+  const messageIdRef = useRef(0);
+
+  // FUDバッファ（APIから10個ずつ取得してここにストック）
+  const fudBufferRef = useRef<string[]>([]);
+  const isFetchingFudRef = useRef(false);
+
+  // Good Newsバッファ（APIから10個ずつ取得）
+  const goodNewsBufferRef = useRef<string[]>([]);
+  const isFetchingGoodNewsRef = useRef(false);
+
+  // FUD APIから10個取得してバッファに追加
+  const fetchFuds = useCallback(async () => {
+    if (isFetchingFudRef.current) return;
+    isFetchingFudRef.current = true;
+
     try {
-      const response = await fetch("/api/fud");
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
-      return data.fud;
-    } catch {
-      // Fallback to local FUD
-      return FALLBACK_FUDS[Math.floor(Math.random() * FALLBACK_FUDS.length)];
+      const res = await fetch("/api/fud");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.fuds && Array.isArray(data.fuds)) {
+          fudBufferRef.current.push(...data.fuds);
+          console.log(`FUD buffer: +${data.fuds.length}, total: ${fudBufferRef.current.length}`);
+        }
+      }
+    } catch (e) {
+      console.error("FUD fetch error:", e);
+    } finally {
+      isFetchingFudRef.current = false;
     }
   }, []);
 
-  // Get random FUD (either from API or fallback)
-  const getRandomFud = useCallback(async (): Promise<string> => {
-    const now = Date.now();
-    // Rate limit API calls to every 2 seconds
-    if (now - lastFetchRef.current < 2000 || isLoading) {
-      return FALLBACK_FUDS[Math.floor(Math.random() * FALLBACK_FUDS.length)];
+  // Good News APIから10個取得してバッファに追加
+  const fetchGoodNews = useCallback(async () => {
+    if (isFetchingGoodNewsRef.current) return;
+    isFetchingGoodNewsRef.current = true;
+
+    try {
+      const res = await fetch("/api/good-news");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.news && Array.isArray(data.news)) {
+          goodNewsBufferRef.current.push(...data.news);
+          console.log(`Good news buffer: +${data.news.length}, total: ${goodNewsBufferRef.current.length}`);
+        }
+      }
+    } catch (e) {
+      console.error("Good news fetch error:", e);
+    } finally {
+      isFetchingGoodNewsRef.current = false;
+    }
+  }, []);
+
+  // バッファから1個取得（なければフォールバック）、60秒超えたら良いニュース
+  const getNextMessage = useCallback((isDiamondMode: boolean): string => {
+    // 60秒超えたら良いニュースを返す
+    if (isDiamondMode) {
+      // バッファにあれば先頭から取る
+      if (goodNewsBufferRef.current.length > 0) {
+        const news = goodNewsBufferRef.current.shift()!;
+
+        // 残り少なくなったら補充
+        if (goodNewsBufferRef.current.length < 5 && !isFetchingGoodNewsRef.current) {
+          fetchGoodNews();
+        }
+
+        return news;
+      }
+
+      // バッファ空ならフォールバック
+      return GOOD_NEWS_FALLBACK[Math.floor(Math.random() * GOOD_NEWS_FALLBACK.length)];
     }
 
-    lastFetchRef.current = now;
-    setIsLoading(true);
-    const fud = await fetchFud();
-    setIsLoading(false);
-    return fud;
-  }, [fetchFud, isLoading]);
+    // FUDモード: バッファにあれば先頭から取る
+    if (fudBufferRef.current.length > 0) {
+      const fud = fudBufferRef.current.shift()!;
 
-  // Add new FUD message
-  const addMessage = useCallback(async () => {
-    const text = await getRandomFud();
+      // 残り少なくなったら補充
+      if (fudBufferRef.current.length < 5 && !isFetchingFudRef.current) {
+        fetchFuds();
+      }
+
+      return fud;
+    }
+
+    // バッファ空ならフォールバック
+    return LOCAL_FALLBACK[Math.floor(Math.random() * LOCAL_FALLBACK.length)];
+  }, [fetchFuds, fetchGoodNews]);
+
+  // 初期フェッチ（FUD）
+  useEffect(() => {
+    fetchFuds();
+  }, [fetchFuds]);
+
+  // 55秒に近づいたらGood Newsを先読みフェッチ
+  useEffect(() => {
+    if (isActive && elapsedTime >= 55 && elapsedTime < 60 && goodNewsBufferRef.current.length === 0) {
+      fetchGoodNews();
+    }
+  }, [isActive, elapsedTime, fetchGoodNews]);
+
+  // Diamond mode check
+  const isDiamondMode = elapsedTime >= 60;
+
+  // Add new message (FUD or good news)
+  const addMessage = useCallback(() => {
+    const text = getNextMessage(isDiamondMode);
     const id = messageIdRef.current++;
 
-    // Report the FUD message to game state (strip emojis for NFT)
+    // Report the message to game state (strip emojis for NFT)
     // eslint-disable-next-line no-misleading-character-class
     const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
-    onFudShown?.(cleanText);
+    onMessageShown?.(cleanText);
 
     // Random position and styling
     const top = Math.random() * 80 + 5; // 5-85% from top
@@ -98,7 +168,7 @@ export function FudTicker({ isActive, elapsedTime, onFudShown }: FudTickerProps)
     setTimeout(() => {
       setMessages((prev) => prev.filter((m) => m.id !== id));
     }, duration * 1000);
-  }, [getRandomFud, onFudShown]);
+  }, [getNextMessage, onMessageShown, isDiamondMode]);
 
   // Initial FUD when game starts
   const hasStartedRef = useRef(false);
@@ -113,20 +183,25 @@ export function FudTicker({ isActive, elapsedTime, onFudShown }: FudTickerProps)
     }
   }, [isActive, addMessage]);
 
-  // Spawn FUD messages based on elapsed time
+  // Spawn messages based on elapsed time
   const lastSpawnRef = useRef(0);
   useEffect(() => {
     if (!isActive) return;
 
     // Calculate spawn interval and count based on elapsed time
     const getSpawnConfig = () => {
-      if (elapsedTime < 10) return { interval: 8000, count: 1 };
-      if (elapsedTime < 20) return { interval: 6000, count: 1 };
-      if (elapsedTime < 35) return { interval: 3500, count: 1 };
-      if (elapsedTime < 45) return { interval: 1500, count: 1 };
-      if (elapsedTime < 52) return { interval: 600, count: 2 };  // 2個同時
-      if (elapsedTime < 57) return { interval: 300, count: 3 };  // 3個同時
-      return { interval: 150, count: 4 }; // ラスト3秒は4個同時で0.15秒ごと
+      // 60秒超えたら良いニュースモード（穏やかに）
+      if (elapsedTime >= 60) return { interval: 2000, count: 1 };
+
+      // FUDモード: 序盤は少なく、終盤に向けて徐々に増加（ただし控えめ）
+      if (elapsedTime < 5)  return { interval: 2500, count: 1 };
+      if (elapsedTime < 15) return { interval: 2000, count: 1 };
+      if (elapsedTime < 25) return { interval: 1500, count: 2 };
+      if (elapsedTime < 35) return { interval: 1200, count: 2 };
+      if (elapsedTime < 45) return { interval: 1000, count: 2 };
+      if (elapsedTime < 52) return { interval: 800, count: 3 };
+      if (elapsedTime < 57) return { interval: 700, count: 3 };
+      return { interval: 600, count: 3 }; // ラスト3秒も3個に軽減
     };
 
     const now = Date.now();
@@ -134,9 +209,9 @@ export function FudTicker({ isActive, elapsedTime, onFudShown }: FudTickerProps)
 
     if (now - lastSpawnRef.current >= interval) {
       lastSpawnRef.current = now;
-      // Spawn multiple FUDs at once
+      // Spawn multiple messages at once
       for (let i = 0; i < count; i++) {
-        setTimeout(() => addMessage(), i * 50);
+        setTimeout(() => addMessage(), i * 100);
       }
     }
   }, [isActive, elapsedTime, addMessage]);
@@ -148,12 +223,16 @@ export function FudTicker({ isActive, elapsedTime, onFudShown }: FudTickerProps)
       {messages.map((msg) => (
         <div
           key={msg.id}
-          className="fud-ticker absolute whitespace-nowrap text-fud font-bold drop-shadow-lg"
+          className={`fud-ticker absolute whitespace-nowrap font-bold drop-shadow-lg ${
+            isDiamondMode ? "text-diamond" : "text-fud"
+          }`}
           style={{
             top: `${msg.top}%`,
             fontSize: `${msg.fontSize}px`,
             ["--duration" as string]: `${msg.duration}s`,
-            textShadow: "0 0 10px rgba(255, 51, 51, 0.5)",
+            textShadow: isDiamondMode
+              ? "0 0 10px rgba(0, 212, 255, 0.5)"
+              : "0 0 10px rgba(255, 51, 51, 0.5)",
           }}
         >
           {msg.text}

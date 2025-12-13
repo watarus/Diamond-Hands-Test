@@ -1,75 +1,99 @@
 "use client";
 
-import { useSendCalls, useCallsStatus } from "wagmi/experimental";
-import { encodeFunctionData, concat, toHex } from "viem";
+import { useEffect, useState } from "react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { decodeEventLog } from "viem";
 import { DIAMOND_HANDS_ADDRESS, DIAMOND_HANDS_ABI } from "@/lib/contracts";
 import { base } from "wagmi/chains";
 
-// Builder Code for Base attribution (ERC-8021)
-const BUILDER_CODE = "bc_vctya6xa";
-
 export function useMint() {
+  const [tokenId, setTokenId] = useState<bigint | null>(null);
+
   const {
-    sendCalls,
-    data: callsId,
+    writeContract,
+    data: hash,
     isPending: isWritePending,
     error: writeError,
-  } = useSendCalls();
-
-  // Extract the actual ID string from the sendCalls response
-  const callsIdString = typeof callsId === "string" ? callsId : callsId?.id;
+  } = useWriteContract();
 
   const {
-    data: callsStatus,
     isLoading: isConfirming,
+    isSuccess: isConfirmed,
     error: confirmError,
-  } = useCallsStatus({
-    id: callsIdString as string,
-    query: {
-      enabled: !!callsIdString,
-      refetchInterval: (data) =>
-        data.state.data?.status === "success" ? false : 1000,
-    },
+    data: receipt,
+  } = useWaitForTransactionReceipt({
+    hash,
   });
 
-  const isConfirmed = callsStatus?.status === "success";
+  // Parse tokenId from transaction logs when confirmed
+  useEffect(() => {
+    if (isConfirmed && receipt?.logs) {
+      for (const log of receipt.logs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: DIAMOND_HANDS_ABI,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === "DiamondHandsMinted" || decoded.eventName === "PaperHandsMinted") {
+            const args = decoded.args as { tokenId: bigint };
+            setTokenId(args.tokenId);
+            console.log("[useMint] TokenId from event:", args.tokenId.toString());
+            break;
+          }
+        } catch {
+          // Not our event, skip
+        }
+      }
+    }
+  }, [isConfirmed, receipt]);
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log("[useMint] State update:", {
+      hash,
+      isWritePending,
+      isConfirming,
+      isConfirmed,
+      writeError: writeError?.message,
+      confirmError: confirmError?.message,
+    });
+  }, [hash, isWritePending, isConfirming, isConfirmed, writeError, confirmError]);
 
   const mint = async (playerAddress: `0x${string}`, durationSeconds: number, fudMessages: string[] = []) => {
+    console.log("[useMint] mint() called with:", {
+      playerAddress,
+      durationSeconds,
+      fudMessagesCount: fudMessages.length,
+      fudMessages: fudMessages.slice(0, 10),
+    });
+
     const duration = BigInt(Math.floor(durationSeconds));
     // Randomly select up to 6 FUD messages for the NFT
     const shuffled = [...fudMessages].sort(() => Math.random() - 0.5);
     const fudForNft = shuffled.slice(0, 6);
 
-    // Encode the mint function call
-    const callData = encodeFunctionData({
-      abi: DIAMOND_HANDS_ABI,
-      functionName: "mint",
-      args: [playerAddress, duration, fudForNft],
-    });
+    console.log("[useMint] FUD for NFT:", fudForNft);
+    console.log("[useMint] Calling writeContract...");
 
-    // Append Builder Code suffix (ERC-8021) for Base attribution
-    const builderCodeSuffix = toHex(BUILDER_CODE);
-    const dataWithBuilderCode = concat([callData, builderCodeSuffix]);
-
-    sendCalls({
-      calls: [
-        {
-          to: DIAMOND_HANDS_ADDRESS,
-          data: dataWithBuilderCode,
-        },
-      ],
-      capabilities: {
-        auxiliaryFunds: {
-          supported: true,
-        },
-      } as Record<string, unknown>,
-      chainId: base.id,
-    });
+    try {
+      writeContract({
+        address: DIAMOND_HANDS_ADDRESS,
+        abi: DIAMOND_HANDS_ABI,
+        functionName: "mint",
+        args: [playerAddress, duration, fudForNft],
+        chainId: base.id,
+      });
+      console.log("[useMint] writeContract called");
+    } catch (e) {
+      console.error("[useMint] writeContract threw:", e);
+    }
   };
 
   return {
     mint,
-    hash: callsStatus?.receipts?.[0]?.transactionHash,
+    hash,
+    tokenId,
     isPending: isWritePending,
     isConfirming,
     isConfirmed,
