@@ -71,13 +71,15 @@ async function generateGoodNewsBatch(): Promise<string[]> {
       });
 
       const content = completion.choices[0]?.message?.content?.trim() || "";
-      const news = content
+      const lines = content
         .split("\n")
         .map(line => line.trim().replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, ""))
-        .filter(line => line.length > 10 && line.length < 60);
+        .filter(line => line.length > 5); // 空行除去のみ
 
+      const news = lines.filter(line => line.length > 10 && line.length < 80); // 80文字に緩和
+
+      console.log(`Good news batch ${i + 1}/5: ${lines.length} lines, ${news.length} after filter`);
       allNews.push(...news);
-      console.log(`Good news batch ${i + 1}/5: ${news.length} generated`);
     }
 
     console.log(`Total LLM good news: ${allNews.length}`);

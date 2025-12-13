@@ -69,13 +69,15 @@ async function generateFudBatch(): Promise<string[]> {
       });
 
       const content = completion.choices[0]?.message?.content?.trim() || "";
-      const fuds = content
+      const lines = content
         .split("\n")
         .map(line => line.trim().replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, ""))
-        .filter(line => line.length > 10 && line.length < 60);
+        .filter(line => line.length > 5); // 空行除去のみ
 
+      const fuds = lines.filter(line => line.length > 10 && line.length < 80); // 80文字に緩和
+
+      console.log(`FUD batch ${i + 1}/5: ${lines.length} lines, ${fuds.length} after filter`);
       allFuds.push(...fuds);
-      console.log(`Batch ${i + 1}/5: ${fuds.length} FUDs generated`);
     }
 
     console.log(`Total LLM FUDs: ${allFuds.length}`);
