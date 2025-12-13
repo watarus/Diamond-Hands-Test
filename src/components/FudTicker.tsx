@@ -193,15 +193,14 @@ export function FudTicker({ isActive, elapsedTime, onMessageShown }: FudTickerPr
       // 60秒超えたら良いニュースモード（穏やかに）
       if (elapsedTime >= 60) return { interval: 2000, count: 1 };
 
-      // FUDモード: 序盤は少なく、終盤に向けて徐々に増加（ただし控えめ）
-      if (elapsedTime < 5)  return { interval: 2500, count: 1 };
-      if (elapsedTime < 15) return { interval: 2000, count: 1 };
-      if (elapsedTime < 25) return { interval: 1500, count: 2 };
-      if (elapsedTime < 35) return { interval: 1200, count: 2 };
-      if (elapsedTime < 45) return { interval: 1000, count: 2 };
-      if (elapsedTime < 52) return { interval: 800, count: 3 };
-      if (elapsedTime < 57) return { interval: 700, count: 3 };
-      return { interval: 600, count: 3 }; // ラスト3秒も3個に軽減
+      // FUDモード: 序盤はゆっくり、終盤は激しく
+      if (elapsedTime < 10) return { interval: 3000, count: 1 };
+      if (elapsedTime < 20) return { interval: 2500, count: 1 };
+      if (elapsedTime < 30) return { interval: 2000, count: 1 };
+      if (elapsedTime < 40) return { interval: 1500, count: 2 };
+      if (elapsedTime < 50) return { interval: 1000, count: 2 };
+      if (elapsedTime < 55) return { interval: 1000, count: 4 };
+      return { interval: 1000, count: 5 }; // ラスト5秒
     };
 
     const now = Date.now();
