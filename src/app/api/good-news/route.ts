@@ -48,13 +48,13 @@ async function generateGoodNewsBatch(): Promise<string[]> {
     return [...FALLBACK_GOOD_NEWS];
   }
 
-  console.log("Generating 500 good news from LLM...");
+  console.log("Generating 1000 good news from LLM...");
 
   try {
     const allNews: string[] = [];
 
-    // 5回に分けて100個ずつ生成（合計500個）
-    for (let i = 0; i < 5; i++) {
+    // 10回に分けて100個ずつ生成（合計1000個）
+    for (let i = 0; i < 10; i++) {
       const completion = await openai.chat.completions.create({
         model: "x-ai/grok-4.1-fast",
         messages: [
@@ -63,7 +63,7 @@ async function generateGoodNewsBatch(): Promise<string[]> {
             role: "user",
             content: `Diamond Handsを祝福するポジティブなニュースヘッドラインを100個生成してください。
 それぞれ違う内容で、バラエティ豊かに。1行1ヘッドライン、番号不要。
-バッチ${i + 1}/5: ${i === 0 ? '価格上昇・史上最高値系' : i === 1 ? '機関投資家・大企業参入系' : i === 2 ? 'プレイヤー称賛・握力系' : i === 3 ? '未来予想・ムーン系' : 'コミュニティ・技術進歩系'}を中心に。`
+バッチ${i + 1}/10: ${['価格上昇・史上最高値系', '機関投資家・大企業参入系', 'プレイヤー称賛・握力系', '未来予想・ムーン系', 'コミュニティ・技術進歩系', '規制好転・法整備系', 'ETF・金融商品承認系', 'アダプション・普及系', '技術革新・アップグレード系', 'クジラ買い増し・著名人発言系'][i]}を中心に。`
           },
         ],
         max_tokens: 8000,
@@ -78,7 +78,7 @@ async function generateGoodNewsBatch(): Promise<string[]> {
 
       const news = lines.filter(line => line.length > 10 && line.length < 80); // 80文字に緩和
 
-      console.log(`Good news batch ${i + 1}/5: ${lines.length} lines, ${news.length} after filter`);
+      console.log(`Good news batch ${i + 1}/10: ${lines.length} lines, ${news.length} after filter`);
       allNews.push(...news);
     }
 
