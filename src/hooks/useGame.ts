@@ -29,12 +29,22 @@ export function useGame() {
     });
   }, []);
 
+  // 60秒超えたらメッセージリストをクリア（NFTにはGood Newsだけ記録）
+  const prevElapsedRef = useRef(0);
+  useEffect(() => {
+    if (prevElapsedRef.current < DIAMOND_HANDS_THRESHOLD && elapsedTime >= DIAMOND_HANDS_THRESHOLD) {
+      setShownMessages([]);
+    }
+    prevElapsedRef.current = elapsedTime;
+  }, [elapsedTime]);
+
   const startGame = useCallback(() => {
     setGameState("holding");
     setElapsedTime(0);
     setResult(null);
     setShownMessages([]);
     startTimeRef.current = Date.now();
+    prevElapsedRef.current = 0;
 
     timerRef.current = setInterval(() => {
       if (startTimeRef.current) {
