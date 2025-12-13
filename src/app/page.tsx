@@ -24,18 +24,7 @@ export default function Home() {
     DIAMOND_HANDS_THRESHOLD,
   } = useGame();
 
-  const { mint, isPending, isConfirming, isConfirmed, error } = useMint();
-
-  // Show success message when mint is confirmed
-  useEffect(() => {
-    if (isConfirmed && result) {
-      alert(
-        result.isDiamondHands
-          ? "Diamond Hands NFT minted! 💎"
-          : "Paper Hands SBT minted... 📄"
-      );
-    }
-  }, [isConfirmed, result]);
+  const { mint, hash, isPending, isConfirming, isConfirmed, error } = useMint();
 
   // Show error message
   useEffect(() => {
@@ -143,6 +132,8 @@ export default function Home() {
             onMint={handleMint}
             isMinting={isMinting}
             isConnected={isConnected}
+            isMinted={isConfirmed}
+            txHash={hash}
           />
         )}
       </div>

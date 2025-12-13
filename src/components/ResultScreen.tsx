@@ -1,6 +1,7 @@
 "use client";
 
 import type { GameResult } from "@/hooks/useGame";
+import { DIAMOND_HANDS_ADDRESS } from "@/lib/contracts";
 
 // Share Button Component
 function ShareButton({
@@ -8,12 +9,12 @@ function ShareButton({
   duration,
   isDiamondHands,
 }: {
-  platform: "warpcast" | "twitter";
+  platform: "base" | "twitter";
   duration: number;
   isDiamondHands: boolean;
 }) {
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const frameUrl = `${siteUrl}/api/frame?duration=${Math.floor(duration)}`;
+  const resultUrl = `${siteUrl}/result?duration=${Math.floor(duration)}`;
 
   const emoji = isDiamondHands ? "💎" : "📄";
   const title = isDiamondHands ? "Diamond Hands" : "Paper Hands";
@@ -24,15 +25,15 @@ function ShareButton({
   const resultText = isDiamondHands
     ? `${timeStr} FUDに耐え抜いた！`
     : `${timeStr}で心が折れた...`;
-  const text = `${emoji} ${title}!\n${resultText}\n\nDiamond Hands Test on Base`;
 
   const handleShare = () => {
-    const resultUrl = `${siteUrl}/result?duration=${Math.floor(duration)}`;
     let url = "";
-    if (platform === "warpcast") {
-      url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(frameUrl)}`;
+    if (platform === "base") {
+      const text = `${emoji} ${title}! ${resultText} - Diamond Hands Test on Base`;
+      url = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(resultUrl)}`;
     } else {
-      // Twitter will fetch OG image from the result page
+      // Twitter - simpler text format
+      const text = `${emoji} ${title}! ${timeStr} ${isDiamondHands ? "FUDに耐え抜いた！" : "で心が折れた..."} #DiamondHandsTest #Base`;
       url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(resultUrl)}`;
     }
     window.open(url, "_blank");
@@ -43,8 +44,44 @@ function ShareButton({
       onClick={handleShare}
       className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition-all"
     >
-      {platform === "warpcast" ? "🟣 Warpcast" : "𝕏 Twitter"}
+      {platform === "base" ? "🔵 Base App" : "𝕏 Twitter"}
     </button>
+  );
+}
+
+// NFT Preview Component
+function NftPreview({ duration, isDiamondHands, txHash }: { duration: number; isDiamondHands: boolean; txHash?: string }) {
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.floor(duration % 60);
+  const timeStr = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+  return (
+    <div className="flex flex-col items-center gap-4 p-4 bg-gray-900 rounded-xl">
+      <div className={`w-48 h-48 rounded-lg flex flex-col items-center justify-center ${isDiamondHands ? "bg-gradient-to-br from-cyan-400 to-blue-600" : "bg-gradient-to-br from-gray-400 to-gray-600"}`}>
+        <span className="text-6xl">{isDiamondHands ? "💎" : "📄"}</span>
+        <span className="text-white font-bold mt-2">{isDiamondHands ? "DIAMOND HANDS" : "PAPER HANDS"}</span>
+        <span className="text-white/80 text-sm">{timeStr}</span>
+      </div>
+      <p className="text-green-400 text-sm">✓ Minted successfully!</p>
+      {txHash && (
+        <a
+          href={`https://basescan.org/tx/${txHash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 text-xs underline"
+        >
+          View on BaseScan
+        </a>
+      )}
+      <a
+        href={`https://opensea.io/assets/base/${DIAMOND_HANDS_ADDRESS}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-400 hover:text-blue-300 text-xs underline"
+      >
+        View on OpenSea
+      </a>
+    </div>
   );
 }
 
@@ -54,6 +91,8 @@ interface ResultScreenProps {
   onMint: () => void;
   isMinting: boolean;
   isConnected: boolean;
+  isMinted?: boolean;
+  txHash?: string;
 }
 
 export function ResultScreen({
@@ -62,6 +101,8 @@ export function ResultScreen({
   onMint,
   isMinting,
   isConnected,
+  isMinted = false,
+  txHash,
 }: ResultScreenProps) {
   const { duration, isDiamondHands } = result;
   const minutes = Math.floor(duration / 60);
@@ -70,39 +111,46 @@ export function ResultScreen({
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 p-8 text-center">
-      {/* Result Icon */}
-      <div className="text-8xl">
-        {isDiamondHands ? "💎" : "📄"}
-      </div>
+      {/* NFT Preview after minting */}
+      {isMinted ? (
+        <NftPreview duration={duration} isDiamondHands={isDiamondHands} txHash={txHash} />
+      ) : (
+        <>
+          {/* Result Icon */}
+          <div className="text-8xl">
+            {isDiamondHands ? "💎" : "📄"}
+          </div>
 
-      {/* Title */}
-      <h1
-        className={`text-4xl md:text-6xl font-bold ${
-          isDiamondHands ? "text-diamond" : "text-paper"
-        }`}
-      >
-        {isDiamondHands ? "DIAMOND HANDS" : "PAPER HANDS"}
-      </h1>
+          {/* Title */}
+          <h1
+            className={`text-4xl md:text-6xl font-bold ${
+              isDiamondHands ? "text-diamond" : "text-paper"
+            }`}
+          >
+            {isDiamondHands ? "DIAMOND HANDS" : "PAPER HANDS"}
+          </h1>
 
-      {/* Subtitle */}
-      <p className="text-xl text-gray-400">
-        {isDiamondHands
-          ? "あなたはFUDに耐えきった！真の握力の持ち主だ。"
-          : "あなたはFUDに負けた...握力雑魚です。"}
-      </p>
+          {/* Subtitle */}
+          <p className="text-xl text-gray-400">
+            {isDiamondHands
+              ? "あなたはFUDに耐えきった！真の握力の持ち主だ。"
+              : "あなたはFUDに負けた...握力雑魚です。"}
+          </p>
 
-      {/* Duration */}
-      <div className="bg-gray-900 rounded-xl p-6 min-w-[300px]">
-        <p className="text-sm text-gray-500 mb-2">YOUR HODL TIME</p>
-        <p className="font-mono text-4xl font-bold">
-          {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}.
-          {String(milliseconds).padStart(2, "0")}
-        </p>
-      </div>
+          {/* Duration */}
+          <div className="bg-gray-900 rounded-xl p-6 min-w-[300px]">
+            <p className="text-sm text-gray-500 mb-2">YOUR HODL TIME</p>
+            <p className="font-mono text-4xl font-bold">
+              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}.
+              {String(milliseconds).padStart(2, "0")}
+            </p>
+          </div>
+        </>
+      )}
 
       {/* Actions */}
       <div className="flex flex-col gap-4 w-full max-w-xs">
-        {isConnected ? (
+        {!isMinted && isConnected && (
           <button
             onClick={onMint}
             disabled={isMinting}
@@ -123,7 +171,9 @@ export function ResultScreen({
               ? "Mint Diamond Hands NFT 💎"
               : "Mint Paper Hands SBT 📄"}
           </button>
-        ) : (
+        )}
+
+        {!isMinted && !isConnected && (
           <p className="text-gray-500 text-sm">
             ウォレットを接続してNFT/SBTをミント
           </p>
@@ -142,7 +192,7 @@ export function ResultScreen({
         <p className="text-gray-500 text-sm">結果をシェア</p>
         <div className="flex gap-2">
           <ShareButton
-            platform="warpcast"
+            platform="base"
             duration={duration}
             isDiamondHands={isDiamondHands}
           />
