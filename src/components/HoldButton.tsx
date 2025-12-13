@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef, useCallback } from "react";
 
 interface HoldButtonProps {
   onHoldStart: () => void;
@@ -15,57 +15,67 @@ export function HoldButton({
   isHolding,
   disabled = false,
 }: HoldButtonProps) {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const isPressedRef = useRef(false);
+  const isActiveRef = useRef(false);
+  const targetRef = useRef<EventTarget | null>(null);
 
-  useEffect(() => {
-    const button = buttonRef.current;
-    if (!button) return;
-
-    const handlePointerDown = (e: PointerEvent) => {
+  const preventDefault = useCallback((e: Event) => {
+    if (e.cancelable) {
       e.preventDefault();
-      if (disabled) return;
+    }
+  }, []);
 
-      isPressedRef.current = true;
-      // Capture pointer to receive events even if pointer leaves element
-      button.setPointerCapture(e.pointerId);
+  const handleStart = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      if (disabled || isActiveRef.current) return;
+
+      // Prevent default touch behaviors (scrolling, zooming, context menu)
+      if (e.target) {
+        e.target.addEventListener("touchend", preventDefault, { passive: false });
+        e.target.addEventListener("touchmove", preventDefault, { passive: false });
+        e.target.addEventListener("contextmenu", preventDefault);
+        targetRef.current = e.target;
+      }
+
+      isActiveRef.current = true;
       onHoldStart();
-    };
+    },
+    [disabled, onHoldStart, preventDefault]
+  );
 
-    const handlePointerUp = (e: PointerEvent) => {
-      e.preventDefault();
-      if (!isPressedRef.current) return;
+  const handleEnd = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      if (!isActiveRef.current) return;
 
-      isPressedRef.current = false;
-      button.releasePointerCapture(e.pointerId);
+      // Clean up event listeners
+      if (targetRef.current) {
+        targetRef.current.removeEventListener("touchend", preventDefault);
+        targetRef.current.removeEventListener("touchmove", preventDefault);
+        targetRef.current.removeEventListener("contextmenu", preventDefault);
+        targetRef.current = null;
+      }
+
+      isActiveRef.current = false;
       onHoldEnd();
-    };
+    },
+    [onHoldEnd, preventDefault]
+  );
 
-    const handlePointerCancel = (e: PointerEvent) => {
-      if (!isPressedRef.current) return;
-
-      isPressedRef.current = false;
-      button.releasePointerCapture(e.pointerId);
-      onHoldEnd();
-    };
-
-    // Use native event listeners for better control
-    button.addEventListener("pointerdown", handlePointerDown);
-    button.addEventListener("pointerup", handlePointerUp);
-    button.addEventListener("pointercancel", handlePointerCancel);
-    button.addEventListener("lostpointercapture", handlePointerCancel);
-
-    return () => {
-      button.removeEventListener("pointerdown", handlePointerDown);
-      button.removeEventListener("pointerup", handlePointerUp);
-      button.removeEventListener("pointercancel", handlePointerCancel);
-      button.removeEventListener("lostpointercapture", handlePointerCancel);
-    };
-  }, [disabled, onHoldStart, onHoldEnd]);
+  const handleCancel = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      // Same as handleEnd but for cancel/leave scenarios
+      handleEnd(e);
+    },
+    [handleEnd]
+  );
 
   return (
     <button
-      ref={buttonRef}
+      onTouchStart={handleStart}
+      onTouchEnd={handleEnd}
+      onTouchCancel={handleCancel}
+      onMouseDown={handleStart}
+      onMouseUp={handleEnd}
+      onMouseLeave={handleCancel}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       className={`
@@ -82,7 +92,12 @@ export function HoldButton({
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
       `}
-      style={{ touchAction: "none" }}
+      style={{
+        touchAction: "none",
+        WebkitTouchCallout: "none",
+        WebkitUserSelect: "none",
+        userSelect: "none",
+      }}
     >
       {isHolding ? (
         <span className="animate-pulse">HOLDING...</span>
