@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import OpenAI from "openai";
 import { put, list } from "@vercel/blob";
 import { FALLBACK_FUDS } from "@/lib/fallback-fuds";
@@ -172,7 +173,11 @@ export async function GET() {
     const fallbackResponse = getRandomFuds(FALLBACK_FUDS, BATCH_SIZE);
 
     if (!isGenerating) {
-      generateAndCacheInBackground().catch(console.error);
+      // after() keeps the function alive after response is sent
+      after(async () => {
+        console.log("Starting FUD background generation via after()");
+        await generateAndCacheInBackground();
+      });
     }
 
     return NextResponse.json({ fuds: fallbackResponse });

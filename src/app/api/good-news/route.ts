@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import OpenAI from "openai";
 import { put, list } from "@vercel/blob";
 import { FALLBACK_GOOD_NEWS } from "@/lib/fallback-good-news";
@@ -174,7 +175,11 @@ export async function GET() {
     const fallbackResponse = getRandomNews(FALLBACK_GOOD_NEWS, BATCH_SIZE);
 
     if (!isGenerating) {
-      generateAndCacheInBackground().catch(console.error);
+      // after() keeps the function alive after response is sent
+      after(async () => {
+        console.log("Starting good news background generation via after()");
+        await generateAndCacheInBackground();
+      });
     }
 
     return NextResponse.json({ news: fallbackResponse });
