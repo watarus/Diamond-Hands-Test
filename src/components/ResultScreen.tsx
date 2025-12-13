@@ -2,6 +2,7 @@
 
 import type { GameResult } from "@/hooks/useGame";
 import { DIAMOND_HANDS_ADDRESS } from "@/lib/contracts";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 // Share Button Component
 function ShareButton({
@@ -26,7 +27,7 @@ function ShareButton({
     ? `${timeStr} FUDに耐え抜いた！`
     : `${timeStr}で心が折れた...`;
 
-  const handleShare = () => {
+  const handleShare = async () => {
     let url = "";
     if (platform === "base") {
       const text = `${emoji} ${title}! ${resultText} - Diamond Hands Test on Base`;
@@ -34,9 +35,15 @@ function ShareButton({
     } else {
       // Twitter - simpler text format
       const text = `${emoji} ${title}! ${timeStr} ${isDiamondHands ? "FUDに耐え抜いた！" : "で心が折れた..."} #DiamondHandsTest #Base`;
-      url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(resultUrl)}`;
+      url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(resultUrl)}`;
     }
-    window.open(url, "_blank");
+
+    // Use SDK to open URL if in Mini App context, otherwise fallback to window.open
+    try {
+      await sdk.actions.openUrl(url);
+    } catch {
+      window.open(url, "_blank");
+    }
   };
 
   return (
@@ -45,6 +52,24 @@ function ShareButton({
       className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition-all"
     >
       {platform === "base" ? "🔵 Base App" : "𝕏 Twitter"}
+    </button>
+  );
+}
+
+// External Link Component (uses SDK in Mini App)
+function ExternalLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await sdk.actions.openUrl(href);
+    } catch {
+      window.open(href, "_blank");
+    }
+  };
+
+  return (
+    <button onClick={handleClick} className={className}>
+      {children}
     </button>
   );
 }
@@ -64,23 +89,19 @@ function NftPreview({ duration, isDiamondHands, txHash }: { duration: number; is
       </div>
       <p className="text-green-400 text-sm">✓ Minted successfully!</p>
       {txHash && (
-        <a
+        <ExternalLink
           href={`https://basescan.org/tx/${txHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
           className="text-blue-400 hover:text-blue-300 text-xs underline"
         >
           View on BaseScan
-        </a>
+        </ExternalLink>
       )}
-      <a
+      <ExternalLink
         href={`https://opensea.io/assets/base/${DIAMOND_HANDS_ADDRESS}`}
-        target="_blank"
-        rel="noopener noreferrer"
         className="text-blue-400 hover:text-blue-300 text-xs underline"
       >
         View on OpenSea
-      </a>
+      </ExternalLink>
     </div>
   );
 }
