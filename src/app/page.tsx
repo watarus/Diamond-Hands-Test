@@ -21,6 +21,7 @@ export default function Home() {
     startGame,
     endGame,
     resetGame,
+    addFudMessage,
     DIAMOND_HANDS_THRESHOLD,
   } = useGame();
 
@@ -36,7 +37,7 @@ export default function Home() {
 
   const handleMint = async () => {
     if (!isConnected || !result || !address) return;
-    mint(address, result.duration);
+    mint(address, result.duration, result.fudMessages);
   };
 
   const isMinting = isPending || isConfirming;
@@ -84,7 +85,7 @@ export default function Home() {
       </header>
 
       {/* FUD Ticker (shown while holding) */}
-      <FudTicker isActive={gameState === "holding"} elapsedTime={elapsedTime} />
+      <FudTicker isActive={gameState === "holding"} elapsedTime={elapsedTime} onFudShown={addFudMessage} />
 
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center min-h-screen p-4 pt-20">

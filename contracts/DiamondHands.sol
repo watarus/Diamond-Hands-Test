@@ -36,8 +36,9 @@ contract DiamondHands is ERC721, ERC721URIStorage, Ownable {
      * @notice ゲーム結果をミント
      * @param player プレイヤーのアドレス
      * @param duration ホールド時間（秒）
+     * @param fudMessages ゲーム中に表示されたFUDメッセージ（最大6個）
      */
-    function mint(address player, uint256 duration) external returns (uint256) {
+    function mint(address player, uint256 duration, string[] calldata fudMessages) external returns (uint256) {
         uint256 tokenId = _nextTokenId++;
         bool isDiamond = duration >= DIAMOND_THRESHOLD;
 
@@ -48,7 +49,7 @@ contract DiamondHands is ERC721, ERC721URIStorage, Ownable {
         });
 
         _safeMint(player, tokenId);
-        _setTokenURI(tokenId, _generateTokenURI(tokenId, duration, isDiamond));
+        _setTokenURI(tokenId, _generateTokenURI(tokenId, duration, isDiamond, fudMessages));
 
         if (isDiamond) {
             emit DiamondHandsMinted(player, tokenId, duration);
@@ -94,20 +95,24 @@ contract DiamondHands is ERC721, ERC721URIStorage, Ownable {
     /**
      * @notice SVGを生成
      */
-    function _generateSVG(bool isDiamond, string memory timeStr) internal pure returns (string memory) {
-        string memory name = isDiamond ? "Diamond Hands" : "Paper Hands";
-        string memory emoji = isDiamond ? unicode"💎" : unicode"📄";
-        string memory bgColor = isDiamond ? "#00D4FF" : "#FFD700";
+    function _generateSVG(bool isDiamond, string memory timeStr, string[] calldata fudMessages) internal pure returns (string memory) {
+        if (isDiamond) {
+            return _generateDiamondSVG(timeStr);
+        } else {
+            return _generatePaperSVG(timeStr, fudMessages);
+        }
+    }
 
+    function _generateDiamondSVG(string memory timeStr) internal pure returns (string memory) {
         bytes memory svg1 = abi.encodePacked(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">',
             '<rect width="400" height="400" fill="#0a0a0a"/>',
-            '<rect x="20" y="20" width="360" height="360" rx="20" fill="', bgColor, '"/>',
-            '<text x="200" y="120" font-size="80" text-anchor="middle">', emoji, '</text>'
+            '<rect x="20" y="20" width="360" height="360" rx="20" fill="#00D4FF"/>',
+            '<text x="200" y="120" font-size="80" text-anchor="middle">', unicode"💎", '</text>'
         );
 
         bytes memory svg2 = abi.encodePacked(
-            '<text x="200" y="200" font-size="32" font-weight="bold" fill="#000" text-anchor="middle">', name, '</text>',
+            '<text x="200" y="200" font-size="32" font-weight="bold" fill="#000" text-anchor="middle">Diamond Hands</text>',
             '<text x="200" y="260" font-size="48" font-family="monospace" fill="#000" text-anchor="middle">', timeStr, '</text>',
             '<text x="200" y="320" font-size="16" fill="#000" text-anchor="middle">HODL Time</text>',
             '</svg>'
@@ -116,16 +121,85 @@ contract DiamondHands is ERC721, ERC721URIStorage, Ownable {
         return string(abi.encodePacked(svg1, svg2));
     }
 
+    function _generatePaperSVG(string memory timeStr, string[] calldata fudMessages) internal pure returns (string memory) {
+        bytes memory svg1 = abi.encodePacked(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">',
+            '<rect width="400" height="400" fill="#0a0a0a"/>',
+            '<rect x="20" y="20" width="360" height="360" rx="20" fill="#2a2a2a"/>'
+        );
+
+        // Generate FUD text elements from passed messages
+        bytes memory fudElements = _generateFudElements(fudMessages);
+
+        // Main content
+        bytes memory main = abi.encodePacked(
+            '<text x="200" y="120" font-size="80" text-anchor="middle">', unicode"📄", '</text>',
+            '<text x="200" y="200" font-size="32" font-weight="bold" fill="#888" text-anchor="middle">Paper Hands</text>',
+            '<text x="200" y="260" font-size="48" font-family="monospace" fill="#666" text-anchor="middle">', timeStr, '</text>',
+            '<text x="200" y="320" font-size="16" fill="#555" text-anchor="middle">HODL Time</text>',
+            '</svg>'
+        );
+
+        return string(abi.encodePacked(svg1, fudElements, main));
+    }
+
+    // FUD positions - simplified to avoid stack too deep
+    function _generateFudElements(string[] calldata msgs) internal pure returns (bytes memory) {
+        if (msgs.length == 0) return "";
+
+        bytes memory result;
+
+        // Generate each FUD element with fixed positions
+        if (msgs.length > 0) result = abi.encodePacked(result, _fudText(msgs[0], "40", "60", "11", "-15", "7"));
+        if (msgs.length > 1) result = abi.encodePacked(result, _fudText(msgs[1], "280", "85", "10", "12", "8"));
+        if (msgs.length > 2) result = abi.encodePacked(result, _fudText(msgs[2], "55", "150", "9", "-10", "6"));
+        if (msgs.length > 3) result = abi.encodePacked(result, _fudText(msgs[3], "310", "180", "10", "18", "7"));
+        if (msgs.length > 4) result = abi.encodePacked(result, _fudText(msgs[4], "70", "290", "11", "-20", "7"));
+        if (msgs.length > 5) result = abi.encodePacked(result, _fudText(msgs[5], "290", "340", "10", "8", "8"));
+
+        return result;
+    }
+
+    function _fudText(
+        string calldata text,
+        string memory x,
+        string memory y,
+        string memory fontSize,
+        string memory rotation,
+        string memory opacity
+    ) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            '<text x="', x,
+            '" y="', y,
+            '" font-size="', fontSize,
+            '" fill="#ff0000" opacity="0.', opacity,
+            '" transform="rotate(', rotation, ' ', x, ' ', y,
+            ')">', _truncate(text), '</text>'
+        );
+    }
+
+    function _truncate(string calldata str) internal pure returns (string memory) {
+        bytes memory b = bytes(str);
+        if (b.length <= 18) return str;
+
+        bytes memory truncated = new bytes(18);
+        for (uint i = 0; i < 18; i++) {
+            truncated[i] = b[i];
+        }
+        return string(truncated);
+    }
+
     /**
      * @notice トークンURIを動的に生成
      */
     function _generateTokenURI(
         uint256 tokenId,
         uint256 duration,
-        bool isDiamond
+        bool isDiamond,
+        string[] calldata fudMessages
     ) internal pure returns (string memory) {
         string memory timeStr = _formatTime(duration);
-        string memory svg = _generateSVG(isDiamond, timeStr);
+        string memory svg = _generateSVG(isDiamond, timeStr, fudMessages);
         string memory name = isDiamond ? "Diamond Hands" : "Paper Hands";
         string memory desc = isDiamond
             ? "You survived the FUD! True diamond hands."

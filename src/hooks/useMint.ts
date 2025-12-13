@@ -34,14 +34,17 @@ export function useMint() {
 
   const isConfirmed = callsStatus?.status === "success";
 
-  const mint = async (playerAddress: `0x${string}`, durationSeconds: number) => {
+  const mint = async (playerAddress: `0x${string}`, durationSeconds: number, fudMessages: string[] = []) => {
     const duration = BigInt(Math.floor(durationSeconds));
+    // Randomly select up to 6 FUD messages for the NFT
+    const shuffled = [...fudMessages].sort(() => Math.random() - 0.5);
+    const fudForNft = shuffled.slice(0, 6);
 
     // Encode the mint function call
     const callData = encodeFunctionData({
       abi: DIAMOND_HANDS_ABI,
       functionName: "mint",
-      args: [playerAddress, duration],
+      args: [playerAddress, duration, fudForNft],
     });
 
     // Append Builder Code suffix (ERC-8021) for Base attribution

@@ -13,6 +13,7 @@ interface FudMessage {
 interface FudTickerProps {
   isActive: boolean;
   elapsedTime: number;
+  onFudShown?: (message: string) => void;
 }
 
 // Fallback FUD messages when API is not available
@@ -39,7 +40,7 @@ const FALLBACK_FUDS = [
   "💀 主要ブリッジがハッキング、資金凍結",
 ];
 
-export function FudTicker({ isActive, elapsedTime }: FudTickerProps) {
+export function FudTicker({ isActive, elapsedTime, onFudShown }: FudTickerProps) {
   const [messages, setMessages] = useState<FudMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messageIdRef = useRef(0);
@@ -78,6 +79,11 @@ export function FudTicker({ isActive, elapsedTime }: FudTickerProps) {
     const text = await getRandomFud();
     const id = messageIdRef.current++;
 
+    // Report the FUD message to game state (strip emojis for NFT)
+    // eslint-disable-next-line no-misleading-character-class
+    const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
+    onFudShown?.(cleanText);
+
     // Random position and styling
     const top = Math.random() * 80 + 5; // 5-85% from top
     const duration = 8 + Math.random() * 4; // 8-12 seconds
@@ -92,7 +98,7 @@ export function FudTicker({ isActive, elapsedTime }: FudTickerProps) {
     setTimeout(() => {
       setMessages((prev) => prev.filter((m) => m.id !== id));
     }, duration * 1000);
-  }, [getRandomFud]);
+  }, [getRandomFud, onFudShown]);
 
   // Initial FUD when game starts
   const hasStartedRef = useRef(false);
