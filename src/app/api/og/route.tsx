@@ -5,30 +5,37 @@ import { DIAMOND_HANDS_ADDRESS, DIAMOND_HANDS_ABI } from "@/lib/contracts";
 
 export const runtime = "edge";
 
-// Use CDP RPC (OnchainKit API) instead of public RPC to avoid Cloudflare blocks
+// Load Noto Sans JP font for Japanese text (OTF format required by next/og)
+async function loadFont(): Promise<ArrayBuffer> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3333";
+  const res = await fetch(`${baseUrl}/fonts/NotoSansJP-Regular.otf`);
+  return res.arrayBuffer();
+}
+
+// Use dRPC for Base - CDP RPC gets blocked from Vercel Edge by Cloudflare
 const getRpcUrl = () => {
-  const apiKey = process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY;
-  if (apiKey) {
-    return `https://api.developer.coinbase.com/rpc/v1/base/${apiKey}`;
+  const drpcKey = process.env.DRPC_API_KEY;
+  if (drpcKey) {
+    return `https://lb.drpc.org/ogrpc?network=base&dkey=${drpcKey}`;
   }
-  // Fallback to public RPC (may be blocked from Vercel Edge)
-  return "https://mainnet.base.org";
+  // Fallback to public RPC
+  return "https://base-rpc.publicnode.com";
 };
 
-// FUD positions for NFT-style image
+// FUD positions for NFT-style image (card is 500px centered, so 350-850)
 const FUD_POSITIONS = [
-  { x: 50, y: 80 },
-  { x: 50, y: 120 },
-  { x: 50, y: 160 },
-  { x: 50, y: 200 },
-  { x: 50, y: 450 },
-  { x: 50, y: 490 },
-  { x: 650, y: 80 },
-  { x: 650, y: 120 },
-  { x: 650, y: 160 },
-  { x: 650, y: 200 },
-  { x: 650, y: 450 },
-  { x: 650, y: 490 },
+  { x: 30, y: 60 },
+  { x: 75, y: 140 },
+  { x: 45, y: 220 },
+  { x: 65, y: 300 },
+  { x: 35, y: 380 },
+  { x: 80, y: 460 },
+  { x: 885, y: 80 },
+  { x: 920, y: 160 },
+  { x: 895, y: 240 },
+  { x: 910, y: 320 },
+  { x: 880, y: 400 },
+  { x: 925, y: 480 },
 ];
 
 // Fetch messages from contract tokenURI (works for both FUD and Good News)
@@ -48,7 +55,10 @@ async function getMessagesFromContract(tokenId: string): Promise<string[]> {
 
     // tokenURI is "data:application/json;base64,..."
     const base64Json = (tokenURI as string).split(",")[1];
-    const json = JSON.parse(atob(base64Json));
+    // Decode base64 with proper UTF-8 handling
+    const binaryStr = atob(base64Json);
+    const bytes = Uint8Array.from(binaryStr, c => c.charCodeAt(0));
+    const json = JSON.parse(new TextDecoder("utf-8").decode(bytes));
 
     // Extract message attributes (FUD X or Good News X)
     const messages: string[] = [];
@@ -164,8 +174,9 @@ export async function GET(request: Request) {
                 left: FUD_POSITIONS[i]?.x || 50,
                 top: FUD_POSITIONS[i]?.y || 100,
                 fontSize: 14,
+                fontFamily: "Noto Sans JP",
                 color: isDiamond ? "#00D4FF" : "#ff0000",
-                opacity: 0.6,
+                opacity: 0.7,
               }}
             >
               {msg}
@@ -227,6 +238,13 @@ export async function GET(request: Request) {
       {
         width: 1200,
         height: 630,
+        fonts: [
+          {
+            name: "Noto Sans JP",
+            data: await loadFont(),
+            style: "normal",
+          },
+        ],
       }
     );
   }

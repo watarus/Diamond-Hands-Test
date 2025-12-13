@@ -1,7 +1,7 @@
 import { base } from "wagmi/chains";
 
 // Contract address on Base Mainnet
-export const DIAMOND_HANDS_ADDRESS = "0x334fF2e498BAbee2C4370cF167B8f8d8F5E6CB5a" as const;
+export const DIAMOND_HANDS_ADDRESS = "0x9Bb287c1cC354490331385e0213B5B4Ec1a75068" as const;
 
 // Contract ABI (simplified for frontend use)
 export const DIAMOND_HANDS_ABI = [

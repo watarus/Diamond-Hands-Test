@@ -150,8 +150,8 @@ contract DiamondHands is ERC721, ERC721URIStorage, Ownable {
     function _generateMessageElements(string[] calldata msgs, bool isDiamond) internal pure returns (bytes memory) {
         if (msgs.length == 0) return "";
 
-        // Diamond: cyan (#00D4FF), Paper: red (#ff0000)
-        string memory color = isDiamond ? "#00D4FF" : "#ff0000";
+        // Diamond: dark blue (#003366) on cyan bg, Paper: red (#ff0000) on dark bg
+        string memory color = isDiamond ? "#003366" : "#ff0000";
         bytes memory result;
 
         // Generate each message element with fixed positions (no rotation)
