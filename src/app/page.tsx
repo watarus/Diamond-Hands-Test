@@ -9,7 +9,6 @@ import { Timer } from "@/components/Timer";
 import { FudTicker } from "@/components/FudTicker";
 import { ResultScreen } from "@/components/ResultScreen";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { DIAMOND_HANDS_ADDRESS } from "@/lib/contracts";
 
 export default function Home() {
   const { isConnected, address } = useAccount();
@@ -46,13 +45,6 @@ export default function Home() {
 
   const handleMint = async () => {
     if (!isConnected || !result || !address) return;
-
-    // Check if contract is deployed
-    if (DIAMOND_HANDS_ADDRESS === "0x0000000000000000000000000000000000000000") {
-      alert("Contract not deployed yet. Please deploy the contract first.");
-      return;
-    }
-
     mint(address, result.duration);
   };
 
