@@ -23,84 +23,83 @@ export const useHold = ({
     return Math.hypot(x2 - x1, y2 - y1);
   };
 
-  const handleStart = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
-      // Multi-touch prevention
-      if ("touches" in e && e.touches.length > 1) return;
+  // PointerDown
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      // Left click (0) or touch only
+      if (e.button !== 0) return;
 
-      // Get coordinates
-      const clientX =
-        "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY =
-        "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+      // Set pointer capture - events will be received even if pointer leaves element
+      (e.target as Element).setPointerCapture(e.pointerId);
 
       isHoldingRef.current = true;
       startTimeRef.current = performance.now();
-      startCoordRef.current = { x: clientX, y: clientY };
+      startCoordRef.current = { x: e.clientX, y: e.clientY };
 
-      onStart?.();
+      if (onStart) onStart();
     },
     [onStart]
   );
 
-  const handleMove = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
+  // PointerMove
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
       if (!isHoldingRef.current || !startCoordRef.current) return;
-
-      const clientX =
-        "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY =
-        "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
       const distance = getDistance(
         startCoordRef.current.x,
         startCoordRef.current.y,
-        clientX,
-        clientY
+        e.clientX,
+        e.clientY
       );
 
       if (distance > moveThreshold) {
         isHoldingRef.current = false;
         startTimeRef.current = null;
         startCoordRef.current = null;
-        onFail?.("moved");
+        if (onFail) onFail("moved");
       }
     },
     [moveThreshold, onFail]
   );
 
-  const handleEnd = useCallback(() => {
-    if (!isHoldingRef.current || !startTimeRef.current) return;
+  // PointerUp
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isHoldingRef.current || !startTimeRef.current) return;
 
-    const endTime = performance.now();
-    const duration = endTime - startTimeRef.current;
+      const endTime = performance.now();
+      const duration = endTime - startTimeRef.current;
 
-    isHoldingRef.current = false;
-    startTimeRef.current = null;
-    startCoordRef.current = null;
-
-    onSuccess?.(duration);
-  }, [onSuccess]);
-
-  const handleCancel = useCallback(() => {
-    if (isHoldingRef.current) {
       isHoldingRef.current = false;
       startTimeRef.current = null;
       startCoordRef.current = null;
-      onFail?.("canceled");
-    }
-  }, [onFail]);
+
+      if (onSuccess) onSuccess(duration);
+    },
+    [onSuccess]
+  );
+
+  // PointerCancel
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent) => {
+      if (isHoldingRef.current) {
+        isHoldingRef.current = false;
+        startTimeRef.current = null;
+        startCoordRef.current = null;
+        if (onFail) onFail("canceled");
+      }
+    },
+    [onFail]
+  );
 
   return {
     handlers: {
-      onTouchStart: handleStart,
-      onTouchMove: handleMove,
-      onTouchEnd: handleEnd,
-      onTouchCancel: handleCancel,
-      onMouseDown: handleStart,
-      onMouseMove: handleMove,
-      onMouseUp: handleEnd,
-      onMouseLeave: handleCancel,
+      onPointerDown: handlePointerDown,
+      onPointerMove: handlePointerMove,
+      onPointerUp: handlePointerUp,
+      onPointerCancel: handlePointerCancel,
+      onPointerLeave: handlePointerCancel,
     },
     getIsHolding: () => isHoldingRef.current,
   };
