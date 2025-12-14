@@ -16,24 +16,23 @@ export function useGame() {
   const [gameState, setGameState] = useState<GameState>("idle");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
-  const [shownMessages, setShownMessages] = useState<string[]>([]);
 
   const startTimeRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const shownMessagesRef = useRef<string[]>([]);
 
-  // Add a message to the list (FUD or Good News)
+  // Add a message to the list (FUD or Good News) - uses ref, no re-render
   const addMessage = useCallback((message: string) => {
-    setShownMessages((prev) => {
-      if (prev.includes(message)) return prev;
-      return [...prev, message].slice(-20);
-    });
+    if (!shownMessagesRef.current.includes(message)) {
+      shownMessagesRef.current = [...shownMessagesRef.current, message].slice(-20);
+    }
   }, []);
 
   // 60秒超えたらメッセージリストをクリア（NFTにはGood Newsだけ記録）
   const prevElapsedRef = useRef(0);
   useEffect(() => {
     if (prevElapsedRef.current < DIAMOND_HANDS_THRESHOLD && elapsedTime >= DIAMOND_HANDS_THRESHOLD) {
-      setShownMessages([]);
+      shownMessagesRef.current = []; // ref なので再レンダリングなし
     }
     prevElapsedRef.current = elapsedTime;
   }, [elapsedTime]);
@@ -42,7 +41,7 @@ export function useGame() {
     setGameState("holding");
     setElapsedTime(0);
     setResult(null);
-    setShownMessages([]);
+    shownMessagesRef.current = [];
     startTimeRef.current = Date.now();
     prevElapsedRef.current = 0;
 
@@ -68,9 +67,9 @@ export function useGame() {
     setResult({
       duration: finalTime,
       isDiamondHands: finalTime >= DIAMOND_HANDS_THRESHOLD,
-      messages: shownMessages,
+      messages: shownMessagesRef.current,
     });
-  }, [shownMessages]);
+  }, []);
 
   const resetGame = useCallback(() => {
     if (timerRef.current) {
