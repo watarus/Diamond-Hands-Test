@@ -231,7 +231,6 @@ export function ResultScreen({
 
   const minutes = Math.floor(duration / 60);
   const seconds = Math.floor(duration % 60);
-  const milliseconds = Math.floor((duration % 1) * 100);
 
   // Fetch additional messages if we don't have enough for NFT (need 12)
   // Diamond Hands: fetch good news, Paper Hands: fetch FUD
@@ -356,8 +355,7 @@ export function ResultScreen({
           <div className="bg-gray-900 rounded-xl p-6 min-w-[300px]">
             <p className="text-sm text-gray-500 mb-2">YOUR HODL TIME</p>
             <p className="font-mono text-4xl font-bold">
-              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}.
-              {String(milliseconds).padStart(2, "0")}
+              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
             </p>
           </div>
         </>
