@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #0a0a0f;
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      padding: 50px 80px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      font-size: 44px;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 30px;
+      flex-shrink: 0;
+    }
+    .badge {
+      display: inline-block;
+      background: #0052FF;
+      color: white;
+      font-size: 18px;
+      padding: 5px 14px;
+      border-radius: 8px;
+      margin-left: 16px;
+      vertical-align: middle;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+    .feature {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-radius: 16px;
+      padding: 20px;
+      border-left: 5px solid #00d4ff;
+    }
+    .feature-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 10px;
+    }
+    .feature-desc {
+      font-size: 18px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+    .code-box {
+      background: #111;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 20px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 16px;
+      color: #7fdbca;
+      flex-shrink: 0;
+    }
+    .highlight {
+      color: #00d4ff;
+    }
+    .spacer {
+      flex: 1;
+    }
+    .bottom-note {
+      background: rgba(0, 82, 255, 0.1);
+      border: 2px solid #0052FF;
+      border-radius: 14px;
+      padding: 16px 24px;
+      font-size: 20px;
+      color: #ccc;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">推し① フルオンチェーンNFT<span class="badge">外部依存ゼロ</span></div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-title">📦 100%オンチェーン保存</div>
+      <div class="feature-desc">
+        画像もメタデータもコントラクト内に完全保存。<br>
+        IPFSやArweaveに頼らない真の永続性。
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">🎨 SVG動的生成</div>
+      <div class="feature-desc">
+        プレイ時間・FUD/Good Newsメッセージを<br>
+        SVG画像としてオンチェーンで動的生成。
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">💎 Diamond Hands = NFT</div>
+      <div class="feature-desc">
+        60秒以上耐えた証。<br>
+        譲渡可能なトロフィーNFT。
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-title">📄 Paper Hands = 真のSBT</div>
+      <div class="feature-desc">
+        カスタム<span class="highlight">_update</span>で転送をブロック。<br>
+        永久に刻まれる不名誉。
+      </div>
+    </div>
+  </div>
+
+  <div class="code-box">
+    <span style="color:#c792ea">function</span> _update(address to, uint256 tokenId, address auth) <span style="color:#c792ea">internal override</span> {<br>
+    &nbsp;&nbsp;<span style="color:#c792ea">if</span> (!tokens[tokenId].isDiamond && _ownerOf(tokenId) != address(0)) <span style="color:#c792ea">revert</span> <span style="color:#ff5370">SoulboundToken</span>();<br>
+    &nbsp;&nbsp;<span style="color:#c792ea">return super</span>._update(to, tokenId, auth);<br>
+    }
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="bottom-note">
+    💡 Baseチェーンが存在する限り、あなたのDiamond Hands証明は永遠に残る
+  </div>
+</body>
+</html>

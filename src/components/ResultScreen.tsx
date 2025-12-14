@@ -4,14 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Transaction,
   TransactionButton,
-  TransactionSponsor,
-  TransactionStatus,
-  TransactionStatusAction,
-  TransactionStatusLabel,
-  TransactionToast,
-  TransactionToastIcon,
-  TransactionToastLabel,
-  TransactionToastAction,
 } from "@coinbase/onchainkit/transaction";
 import type { LifecycleStatus } from "@coinbase/onchainkit/transaction";
 import type { ContractFunctionParameters } from "viem";
@@ -126,14 +118,18 @@ function ShareButton({
   );
 }
 
-// External Link Component (uses SDK in Mini App)
-function ExternalLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+// External Link Component (uses SDK in Mini App, regular link in browser)
+function ExternalLink({ href, children, className, platform }: { href: string; children: React.ReactNode; className?: string; platform: Platform }) {
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    try {
-      await sdk.actions.openUrl(href);
-    } catch {
+    if (platform === "browser") {
       window.open(href, "_blank");
+    } else {
+      try {
+        await sdk.actions.openUrl(href);
+      } catch {
+        window.open(href, "_blank");
+      }
     }
   };
 
@@ -161,7 +157,7 @@ const FUD_POSITIONS = [
 ];
 
 // NFT Preview Component - uses messages passed from parent (already supplemented)
-function NftPreview({ duration, isDiamondHands, txHash, messages }: { duration: number; isDiamondHands: boolean; txHash?: string; messages: string[] }) {
+function NftPreview({ duration, isDiamondHands, txHash, messages, platform }: { duration: number; isDiamondHands: boolean; txHash?: string; messages: string[]; platform: Platform }) {
   const minutes = Math.floor(duration / 60);
   const seconds = Math.floor(duration % 60);
   const timeStr = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
@@ -196,6 +192,7 @@ function NftPreview({ duration, isDiamondHands, txHash, messages }: { duration: 
         <ExternalLink
           href={`https://basescan.org/tx/${txHash}`}
           className="text-blue-400 hover:text-blue-300 text-xs underline"
+          platform={platform}
         >
           View on BaseScan
         </ExternalLink>
@@ -203,6 +200,7 @@ function NftPreview({ duration, isDiamondHands, txHash, messages }: { duration: 
       <ExternalLink
         href={`https://opensea.io/assets/base/${DIAMOND_HANDS_ADDRESS}`}
         className="text-blue-400 hover:text-blue-300 text-xs underline"
+        platform={platform}
       >
         View on OpenSea
       </ExternalLink>
@@ -330,7 +328,7 @@ export function ResultScreen({
     <div className="flex flex-col items-center justify-center gap-8 p-8 text-center">
       {/* NFT Preview after minting */}
       {isMinted ? (
-        <NftPreview duration={duration} isDiamondHands={isDiamondHands} txHash={txHash} messages={supplementedMessages} />
+        <NftPreview duration={duration} isDiamondHands={isDiamondHands} txHash={txHash} messages={supplementedMessages} platform={platform} />
       ) : (
         <>
           {/* Result Icon */}
@@ -385,16 +383,6 @@ export function ResultScreen({
                 }
               `}
             />
-            <TransactionSponsor />
-            <TransactionStatus>
-              <TransactionStatusLabel />
-              <TransactionStatusAction />
-            </TransactionStatus>
-            <TransactionToast>
-              <TransactionToastIcon />
-              <TransactionToastLabel />
-              <TransactionToastAction />
-            </TransactionToast>
           </Transaction>
         )}
 

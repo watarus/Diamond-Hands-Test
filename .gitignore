@@ -34,6 +34,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Google credentials
+google-credentials.json
+*-credentials*.json
+
 # Hardhat / Foundry
 /cache
 /artifacts

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #0a0a0f;
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      padding: 50px 80px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      font-size: 44px;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 30px;
+      flex-shrink: 0;
+    }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      flex-shrink: 0;
+    }
+    .tech-card {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    .tech-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+    .tech-category {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .tech-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 6px;
+    }
+    .tech-detail {
+      font-size: 16px;
+      color: #888;
+    }
+    .highlight {
+      color: #0052FF;
+      font-weight: bold;
+    }
+    .spacer {
+      flex: 1;
+    }
+    .contract-box {
+      background: #111;
+      border-radius: 16px;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .contract-label {
+      font-size: 18px;
+      color: #888;
+    }
+    .contract-address {
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 18px;
+      color: #00d4ff;
+    }
+    .contract-network {
+      background: #0052FF;
+      color: white;
+      font-size: 16px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">使用技術</div>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <div class="tech-icon">⚛️</div>
+      <div class="tech-category">フロントエンド</div>
+      <div class="tech-name">Next.js 16</div>
+      <div class="tech-detail">React 19, TypeScript<br>Tailwind CSS 4</div>
+    </div>
+
+    <div class="tech-card">
+      <div class="tech-icon">🔗</div>
+      <div class="tech-category">Base/Web3</div>
+      <div class="tech-name highlight">OnchainKit</div>
+      <div class="tech-detail">Coinbase Paymaster<br>wagmi, viem</div>
+    </div>
+
+    <div class="tech-card">
+      <div class="tech-icon">🤖</div>
+      <div class="tech-category">AI</div>
+      <div class="tech-name">Grok 4.1 Fast</div>
+      <div class="tech-detail">OpenRouter API<br>Vercel Blob Cache</div>
+    </div>
+
+    <div class="tech-card">
+      <div class="tech-icon">📜</div>
+      <div class="tech-category">コントラクト</div>
+      <div class="tech-name">Solidity</div>
+      <div class="tech-detail">フルオンチェーンSVG<br>ERC-721 + SBT</div>
+    </div>
+
+    <div class="tech-card">
+      <div class="tech-icon">☁️</div>
+      <div class="tech-category">インフラ</div>
+      <div class="tech-name">Vercel Edge</div>
+      <div class="tech-detail">Edge Runtime<br>dRPC</div>
+    </div>
+
+    <div class="tech-card">
+      <div class="tech-icon">📱</div>
+      <div class="tech-category">ソーシャル</div>
+      <div class="tech-name">Farcaster</div>
+      <div class="tech-detail">Mini App SDK<br>Frames</div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="contract-box">
+    <div>
+      <div class="contract-label">デプロイ済みコントラクト</div>
+      <div class="contract-address">0x9Bb287c1cC354490331385e0213B5B4Ec1a75068</div>
+    </div>
+    <div class="contract-network">Base Mainnet</div>
+  </div>
+</body>
+</html>

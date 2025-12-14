@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%);
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      padding: 80px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .header {
+      font-size: 36px;
+      color: #888;
+      margin-bottom: 40px;
+    }
+    .name {
+      font-size: 96px;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 50px;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    }
+    .at {
+      color: #666;
+      font-weight: normal;
+    }
+    .tags {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 60px;
+    }
+    .tag {
+      background: rgba(0, 82, 255, 0.2);
+      border: 2px solid #0052FF;
+      border-radius: 40px;
+      padding: 16px 36px;
+      font-size: 28px;
+      color: white;
+    }
+    .tag.hobby {
+      background: rgba(255, 107, 107, 0.2);
+      border-color: #ff6b6b;
+    }
+    .description {
+      font-size: 32px;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .diamond {
+      position: absolute;
+      bottom: 60px;
+      right: 80px;
+      font-size: 64px;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Created by</div>
+  <div class="name"><span class="at">@</span>watarus</div>
+
+  <div class="tags">
+    <div class="tag">Web2 Software Engineer</div>
+    <div class="tag hobby">Web3 is Hobby</div>
+  </div>
+
+  <div class="description">
+    普段はWeb2のソフトウェアエンジニア<br>
+    Web3開発は趣味で楽しんでいます
+  </div>
+
+  <div class="diamond">💎</div>
+</body>
+</html>

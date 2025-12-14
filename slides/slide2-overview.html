@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #0a0a0f;
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      padding: 50px 80px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      font-size: 48px;
+      font-weight: bold;
+      color: #0052FF;
+      margin-bottom: 40px;
+      border-bottom: 4px solid #0052FF;
+      padding-bottom: 16px;
+      flex-shrink: 0;
+    }
+    .content {
+      display: flex;
+      gap: 50px;
+      flex: 1;
+      min-height: 0;
+    }
+    .left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .description {
+      font-size: 24px;
+      line-height: 1.7;
+      color: #ccc;
+      margin-bottom: 30px;
+    }
+    .rule-box {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .rule-title {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .diamond-rule {
+      color: #00d4ff;
+    }
+    .paper-rule {
+      color: #ff4444;
+    }
+    .rule-detail {
+      font-size: 20px;
+      color: #888;
+    }
+    .right {
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .flow {
+      text-align: center;
+    }
+    .flow-item {
+      background: #1a1a2e;
+      border: 2px solid #333;
+      border-radius: 14px;
+      padding: 16px 24px;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+    .flow-arrow {
+      color: #0052FF;
+      font-size: 28px;
+      margin: 4px 0;
+    }
+    .highlight {
+      color: #00d4ff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">ゲーム概要</div>
+  <div class="content">
+    <div class="left">
+      <div class="description">
+        仮想通貨投資家の「握力」を測定するBase Mini App。<br>
+        ボタンを長押しする間、AIが生成した<span class="highlight">FUDニュース</span>が<br>
+        次々と襲いかかり、プレイヤーのメンタルを揺さぶる。
+      </div>
+
+      <div class="rule-box">
+        <div class="rule-title diamond-rule">💎 60秒以上耐えた勇者</div>
+        <div class="rule-detail">→ Diamond Hands NFT（譲渡可能）</div>
+      </div>
+
+      <div class="rule-box">
+        <div class="rule-title paper-rule">📄 60秒未満で離した敗者</div>
+        <div class="rule-detail">→ Paper Hands SBT（譲渡不可・永久の不名誉）</div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="flow">
+        <div class="flow-item">🎮 ボタン長押し開始</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item">📰 FUDニュースが襲来</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item">⏱️ 60秒耐えられるか？</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item">🏆 NFT/SBT発行</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item">📱 結果をシェア</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
