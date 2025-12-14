@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 
 interface FudMessage {
   id: number;
@@ -39,7 +39,7 @@ const GOOD_NEWS_FALLBACK = [
   "💫 暗号資産の未来は明るい！",
 ];
 
-export function FudTicker({ isActive, elapsedTime, onMessageShown }: FudTickerProps) {
+export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMessageShown }: FudTickerProps) {
   const [messages, setMessages] = useState<FudMessage[]>([]);
   const messageIdRef = useRef(0);
 
@@ -241,4 +241,4 @@ export function FudTicker({ isActive, elapsedTime, onMessageShown }: FudTickerPr
       ))}
     </div>
   );
-}
+});

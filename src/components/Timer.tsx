@@ -1,11 +1,13 @@
 "use client";
 
+import { memo } from "react";
+
 interface TimerProps {
   elapsed: number;
   threshold: number;
 }
 
-export function Timer({ elapsed, threshold }: TimerProps) {
+export const Timer = memo(function Timer({ elapsed, threshold }: TimerProps) {
   const minutes = Math.floor(elapsed / 60);
   const seconds = Math.floor(elapsed % 60);
 
@@ -49,4 +51,4 @@ export function Timer({ elapsed, threshold }: TimerProps) {
       )}
     </div>
   );
-}
+});
