@@ -54,7 +54,7 @@
 - **Address**: `0x9Bb287c1cC354490331385e0213B5B4Ec1a75068`
 - **Network**: Base Mainnet
 - [Basescan](https://basescan.org/address/0x9Bb287c1cC354490331385e0213B5B4Ec1a75068)
-- [OpenSea](https://opensea.io/collection/diamond-hands-test)
+- [OpenSea](https://opensea.io/assets/base/0x9Bb287c1cC354490331385e0213B5B4Ec1a75068)
 
 ## チームメンバー
 
