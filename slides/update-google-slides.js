@@ -9,15 +9,18 @@ require("dotenv").config({ path: path.join(__dirname, "../.env.local") });
 const PRESENTATION_ID = "1Q3ixP0sp9yPqF6uIggMa6dfyovZqmZJUfjGPSVCLp0w";
 const CREDENTIALS_PATH = process.env.GOOGLE_CREDENTIALS_PATH || "./google-credentials.json";
 
-const slideFiles = [
-  "slide1-title.html",
-  "slide8-author.html",
-  "slide2-overview.html",
-  "slide3-onchain.html",
-  "slide4-ai.html",
-  "slide5-miniapp.html",
-  "slide6-techstack.html",
-  "slide7-demo.html",
+// HTMLファイル → Google Slideの位置（1-indexed）
+// スライド3は動画なのでスキップ
+const slideMapping = [
+  { file: "slide1-title.html", googleSlideIndex: 1 },
+  { file: "slide8-author.html", googleSlideIndex: 2 },
+  // Google Slide 3 = 動画（手動追加、スキップ）
+  { file: "slide2-overview.html", googleSlideIndex: 4 },
+  { file: "slide3-onchain.html", googleSlideIndex: 5 },
+  { file: "slide4-ai.html", googleSlideIndex: 6 },
+  { file: "slide5-miniapp.html", googleSlideIndex: 7 },
+  { file: "slide6-techstack.html", googleSlideIndex: 8 },
+  { file: "slide7-demo.html", googleSlideIndex: 9 },
 ];
 
 async function getAuthClient() {
@@ -44,9 +47,9 @@ async function captureSlides() {
   });
 
   const images = [];
-  for (const slideFile of slideFiles) {
+  for (const mapping of slideMapping) {
     const page = await context.newPage();
-    const filePath = path.join(__dirname, slideFile);
+    const filePath = path.join(__dirname, mapping.file);
     await page.goto(`file://${filePath}`);
     await page.waitForTimeout(500);
 
@@ -55,9 +58,9 @@ async function captureSlides() {
       clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
     });
 
-    images.push(buffer);
+    images.push({ buffer, googleSlideIndex: mapping.googleSlideIndex });
     await page.close();
-    console.log(`  Captured: ${slideFile}`);
+    console.log(`  Captured: ${mapping.file} -> Slide ${mapping.googleSlideIndex}`);
   }
 
   await browser.close();
@@ -191,38 +194,34 @@ Setup instructions:
 
     // Get existing slide IDs
     console.log("\nGetting slide structure...");
-    let slideInfo = await getSlideIds(authClient);
+    const slideInfo = await getSlideIds(authClient);
     console.log(`  Found ${slideInfo.length} slides`);
-
-    // Create new slides if needed
-    if (slideInfo.length < images.length) {
-      const needed = images.length - slideInfo.length;
-      console.log(`\nCreating ${needed} new slide(s)...`);
-      await createNewSlides(authClient, needed);
-      // Refresh slide info
-      slideInfo = await getSlideIds(authClient);
-    }
 
     // Upload images to Vercel Blob
     console.log("\nUploading images to Vercel Blob...");
     const uploadedImages = [];
     for (let i = 0; i < images.length; i++) {
       const uploaded = await uploadToBlob(
-        images[i],
-        `slides/slide${i + 1}_${Date.now()}.png`
+        images[i].buffer,
+        `slides/slide${images[i].googleSlideIndex}_${Date.now()}.png`
       );
-      uploadedImages.push(uploaded);
+      uploadedImages.push({ ...uploaded, googleSlideIndex: images[i].googleSlideIndex });
     }
 
-    // Update each slide
+    // Update each slide (using googleSlideIndex mapping)
     console.log("\nUpdating Google Slides...");
-    for (let i = 0; i < images.length; i++) {
-      await updateSlideImage(
-        authClient,
-        slideInfo[i].slideId,
-        uploadedImages[i].url
-      );
-      console.log(`  Updated slide ${i + 1}`);
+    for (const uploaded of uploadedImages) {
+      const slideIndex = uploaded.googleSlideIndex - 1; // 0-indexed
+      if (slideIndex < slideInfo.length) {
+        await updateSlideImage(
+          authClient,
+          slideInfo[slideIndex].slideId,
+          uploaded.url
+        );
+        console.log(`  Updated slide ${uploaded.googleSlideIndex}`);
+      } else {
+        console.log(`  Skipped slide ${uploaded.googleSlideIndex} (not found)`);
+      }
     }
 
     // Cleanup: Delete uploaded blobs

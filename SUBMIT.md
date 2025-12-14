@@ -10,7 +10,7 @@
 
 - **アプリURL**: https://diamond-hands-test.vercel.app
 - **スライド**: https://docs.google.com/presentation/d/1Q3ixP0sp9yPqF6uIggMa6dfyovZqmZJUfjGPSVCLp0w/edit?usp=sharing
-- **デモ動画**: TBD
+- **デモ動画**: https://drive.google.com/file/d/1JtY3gHAIdAdMmURff41SP4-rAKIiPv_m/view?usp=drive_link
 
 ## 推しポイント
 
