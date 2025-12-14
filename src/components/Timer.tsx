@@ -8,7 +8,6 @@ interface TimerProps {
 export function Timer({ elapsed, threshold }: TimerProps) {
   const minutes = Math.floor(elapsed / 60);
   const seconds = Math.floor(elapsed % 60);
-  const milliseconds = Math.floor((elapsed % 1) * 10);
 
   const progress = Math.min((elapsed / threshold) * 100, 100);
   const isDiamondHands = elapsed >= threshold;
@@ -22,8 +21,7 @@ export function Timer({ elapsed, threshold }: TimerProps) {
           ${isDiamondHands ? "text-diamond" : "text-white"}
         `}
       >
-        {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}.
-        {milliseconds}
+        {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
       </div>
 
       {/* Progress Bar */}

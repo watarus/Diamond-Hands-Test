@@ -51,7 +51,7 @@ export function useGame() {
         const elapsed = (Date.now() - startTimeRef.current) / 1000;
         setElapsedTime(elapsed);
       }
-    }, 100);
+    }, 1000);
   }, []);
 
   const endGame = useCallback(() => {
