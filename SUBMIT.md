@@ -1,36 +1,42 @@
-# プロジェクト名
+# Diamond Hands Test
 
-> 一言で表すキャッチコピーを書いてください
+> FUDに耐えてボタンを押し続けろ。あなたの握力をBaseチェーンに刻め。
 
 ## 概要
 
-プロジェクトの概要を2〜3文で説明してください。
+仮想通貨投資家の「握力」を測定するミニゲーム。ボタンを長押しする間、FUD（恐怖・不確実性・疑念）ニュースが次々と流れてくる。60秒以上耐えればDiamond Hands NFT、途中で離したらPaper Hands SBTが発行される。結果はBaseチェーン上にオンチェーンで永久保存。
 
 ## デモ
 
-- **アプリURL**: https://example.com
-- **スライド**: https://example.com (Google Slides等)
-- **デモ動画**(任意): https://example.com (YouTube/Loom等)
+- **アプリURL**: https://diamond-hands-test.vercel.app
+- **スライド**: TBD
+- **デモ動画**(任意): TBD
 
 ## 推しポイント
 
-1. **ポイント1**
-   - 説明
+1. **LLM生成のFUD/Good News**
+   - OpenRouter API (Grok) で500+のユニークなFUDニュースと良いニュースを自動生成
+   - 24時間キャッシュでコスト最適化
 
-2. **ポイント2**
-   - 説明
+2. **フルオンチェーンNFT**
+   - メタデータ・画像すべてコントラクト内に保存（外部依存なし）
+   - Diamond Hands = 譲渡可能NFT、Paper Hands = 譲渡不可SBT
 
-## 使用技術(もしこだわりがあれば)
+3. **Farcaster Mini App対応**
+   - Warpcast内で直接プレイ可能
+   - フレーム共有でバイラル拡散
 
-- **フロントエンド**:
-- **バックエンド**:
-- **データベース**:
-- **インフラ**:
-- **その他**:
+## 使用技術
+
+- **フロントエンド**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Web3**: OnchainKit, Coinbase Smart Wallet, viem
+- **AI**: OpenRouter API (Grok 4.1), Vercel Blob (キャッシュ)
+- **コントラクト**: Solidity, Base Mainnet
+- **インフラ**: Vercel Edge Runtime, dRPC
 
 ## チームメンバー
 
-- 名前 (役割) - @GitHub, @Discord
+- watarus - @watarus
 
 ---
 
