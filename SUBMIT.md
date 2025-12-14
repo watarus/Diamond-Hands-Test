@@ -28,7 +28,7 @@
 
 ## 使用技術
 
-- **フロントエンド**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **フロントエンド**: Next.js 16 (App Router), TypeScript, Tailwind CSS
 - **Web3**: OnchainKit, Coinbase Smart Wallet, viem
 - **AI**: OpenRouter API (Grok 4.1), Vercel Blob (キャッシュ)
 - **コントラクト**: Solidity, Base Mainnet

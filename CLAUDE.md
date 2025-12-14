@@ -7,7 +7,7 @@ FUDニュースに耐えながらボタンを押し続け、結果をNFT/SBTと�
 
 ## 技術スタック
 
-- Next.js 14 (App Router)
+- Next.js 16 (App Router)
 - OnchainKit + Coinbase Smart Wallet
 - Base Mainnet
 - OpenRouter API (FUD生成)
