@@ -31,8 +31,11 @@ NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_api_key
 # OpenRouter API Key (https://openrouter.ai/keys)
 OPENROUTER_API_KEY=your_api_key
 
-# WalletConnect Project ID (https://cloud.walletconnect.com/)
-NEXT_PUBLIC_WC_PROJECT_ID=your_project_id
+# dRPC API Key (https://drpc.org/)
+DRPC_API_KEY=your_api_key
+
+# Vercel Blob Token (https://vercel.com/docs/storage/vercel-blob)
+BLOB_READ_WRITE_TOKEN=your_token
 
 # Site URL (for Farcaster Frames)
 NEXT_PUBLIC_SITE_URL=https://your-domain.vercel.app
@@ -64,21 +67,20 @@ http://localhost:3333 でアプリにアクセス。
 - `public/splash.svg` - スプラッシュ画像
 - `public/og-image.svg` - OG画像 (1200x630)
 
-## スマートコントラクトのデプロイ
+## スマートコントラクト
 
-### Foundry/Hardhatでデプロイ
+デプロイ済み: `0x9Bb287c1cC354490331385e0213B5B4Ec1a75068` (Base Mainnet)
 
-`contracts/DiamondHands.sol`をBase Mainnetにデプロイし、
-`src/lib/contracts.ts`の`DIAMOND_HANDS_ADDRESS`を更新してください。
+- [Basescan](https://basescan.org/address/0x9Bb287c1cC354490331385e0213B5B4Ec1a75068)
 
 ## 技術スタック
 
-- **フロントエンド**: Next.js 14 (App Router), Tailwind CSS
-- **Web3**: OnchainKit, Coinbase Smart Wallet, wagmi, viem
+- **フロントエンド**: Next.js 16, React 19, TypeScript, Tailwind CSS 4
+- **Web3**: OnchainKit, wagmi, viem, Farcaster Mini App SDK
 - **チェーン**: Base Mainnet
-- **FUD生成**: OpenRouter API
+- **AI**: OpenRouter API (Grok 4.1 Fast), Vercel Blob
 - **ソーシャル**: Farcaster Frames
-- **デプロイ**: Vercel
+- **デプロイ**: Vercel Edge Runtime
 
 ## プロジェクト構造
 

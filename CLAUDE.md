@@ -76,11 +76,9 @@ public/
 ```bash
 NEXT_PUBLIC_SITE_URL=         # デプロイURL (必須)
 NEXT_PUBLIC_ONCHAINKIT_API_KEY=  # OnchainKit API Key
-OPENROUTER_API_KEY=           # OpenRouter API Key
-NEXT_PUBLIC_WC_PROJECT_ID=    # WalletConnect Project ID
-
-# Vercel Blob (FUDキャッシュ用)
-BLOB_READ_WRITE_TOKEN=        # Vercel Blobのトークン
+OPENROUTER_API_KEY=           # OpenRouter API Key (FUD/Good News生成)
+DRPC_API_KEY=                 # dRPC API Key (Base RPC)
+BLOB_READ_WRITE_TOKEN=        # Vercel Blob (LLMキャッシュ用)
 ```
 
 ## ゲームルール
@@ -94,8 +92,8 @@ BLOB_READ_WRITE_TOKEN=        # Vercel Blobのトークン
 - [x] `.well-known/farcaster.json` マニフェスト
 - [x] fc:frame メタタグ
 - [x] metadataBase 設定
-- [ ] accountAssociation 署名 (デプロイ後に Base Build で生成)
-- [ ] コントラクトデプロイ (Base Mainnet)
+- [x] accountAssociation 署名
+- [x] コントラクトデプロイ (Base Mainnet: 0x9Bb287c1cC354490331385e0213B5B4Ec1a75068)
 
 ## 注意事項
 
