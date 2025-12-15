@@ -44,7 +44,6 @@ google-credentials.json
 /typechain-types
 /broadcast
 /out
-/lib
 .env*
 
 # Logs
