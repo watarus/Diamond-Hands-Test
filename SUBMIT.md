@@ -25,6 +25,7 @@
 - 「ビットコイン大暴落」「SECが全取引所を閉鎖」など臨場感あるヘッドライン
 - 60秒超えると一転、祝福メッセージに切り替わる演出
 - Vercel Blobで24時間キャッシュ、APIコスト最適化
+- **パーソナライズドFUD** - Alchemy APIでウォレット情報（ETH残高、NFT保有、売却履歴）を分析し、プレイヤー専用の煽りを生成（「お前の0.002ETHじゃガス代も払えない」「TN100x売ったの？今上がってるけど」）
 
 ### 3. Base Mini App ネイティブ体験
 - **OnchainKit** でシームレスなウォレット接続
@@ -44,7 +45,7 @@
 |---------|------|
 | フロントエンド | Next.js 16, React 19, TypeScript, Tailwind CSS 4 |
 | Base/Web3 | **OnchainKit**, **Coinbase Paymaster**, wagmi, viem |
-| AI | OpenRouter API (Grok 4.1 Fast), Vercel Blob |
+| AI | OpenRouter API (Grok 4.1 Fast), Vercel Blob, **Alchemy API** |
 | コントラクト | Solidity (フルオンチェーンSVG NFT), **Base Mainnet** |
 | インフラ | Vercel Edge Runtime, dRPC |
 | ソーシャル | Farcaster Mini App SDK, Frames |

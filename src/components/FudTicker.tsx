@@ -14,6 +14,7 @@ interface FudTickerProps {
   isActive: boolean;
   elapsedTime: number;
   onMessageShown?: (message: string) => void;
+  walletAddress?: string;
 }
 
 // ローカルフォールバック（API失敗時用）
@@ -39,7 +40,7 @@ const GOOD_NEWS_FALLBACK = [
   "💫 暗号資産の未来は明るい！",
 ];
 
-export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMessageShown }: FudTickerProps) {
+export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMessageShown, walletAddress }: FudTickerProps) {
   const [messages, setMessages] = useState<FudMessage[]>([]);
   const messageIdRef = useRef(0);
 
@@ -50,6 +51,33 @@ export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMess
   // Good Newsバッファ（APIから10個ずつ取得）
   const goodNewsBufferRef = useRef<string[]>([]);
   const isFetchingGoodNewsRef = useRef(false);
+
+  // パーソナライズドFUDバッファ（ウォレット接続時に1回取得、序盤で使う）
+  const originalPersonalizedFudRef = useRef<string[]>([]); // フェッチした元データ（保持）
+  const personalizedFudRef = useRef<string[]>([]); // ゲーム中に消費するコピー
+  const hasFetchedPersonalizedRef = useRef(false);
+
+  // パーソナライズドFUDを取得（ウォレット接続時に1回だけ）
+  const fetchPersonalizedFud = useCallback(async (address: string) => {
+    if (hasFetchedPersonalizedRef.current) return;
+    hasFetchedPersonalizedRef.current = true;
+
+    try {
+      const res = await fetch(`/api/personalized-fud?address=${address}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.fuds && Array.isArray(data.fuds)) {
+          // 元データを保存（再プレイ時にコピーして使う）
+          originalPersonalizedFudRef.current = data.fuds;
+          // 現在のゲーム用にもセット
+          personalizedFudRef.current = [...data.fuds];
+          console.log(`Personalized FUD loaded: ${data.fuds.length} messages`);
+        }
+      }
+    } catch (e) {
+      console.error("Personalized FUD fetch error:", e);
+    }
+  }, []);
 
   // FUD APIから10個取得してバッファに追加
   const fetchFuds = useCallback(async () => {
@@ -94,7 +122,7 @@ export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMess
   }, []);
 
   // バッファから1個取得（なければフォールバック）、60秒超えたら良いニュース
-  const getNextMessage = useCallback((isDiamondMode: boolean): string => {
+  const getNextMessage = useCallback((isDiamondMode: boolean, currentElapsed: number): string => {
     // 60秒超えたら良いニュースを返す
     if (isDiamondMode) {
       // バッファにあれば先頭から取る
@@ -111,6 +139,13 @@ export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMess
 
       // バッファ空ならフォールバック
       return GOOD_NEWS_FALLBACK[Math.floor(Math.random() * GOOD_NEWS_FALLBACK.length)];
+    }
+
+    // 序盤（最初の15秒）はパーソナライズドFUDを優先
+    if (currentElapsed < 15 && personalizedFudRef.current.length > 0) {
+      const personalFud = personalizedFudRef.current.shift()!;
+      console.log(`Using personalized FUD: ${personalFud}`);
+      return personalFud;
     }
 
     // FUDモード: バッファにあれば先頭から取る
@@ -134,6 +169,14 @@ export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMess
     fetchFuds();
   }, [fetchFuds]);
 
+  // ウォレット接続時にパーソナライズドFUDをバックグラウンドフェッチ
+  useEffect(() => {
+    if (walletAddress && !hasFetchedPersonalizedRef.current) {
+      console.log("Wallet connected, pre-fetching personalized FUD...");
+      fetchPersonalizedFud(walletAddress);
+    }
+  }, [walletAddress, fetchPersonalizedFud]);
+
   // 55秒に近づいたらGood Newsを先読みフェッチ
   useEffect(() => {
     if (isActive && elapsedTime >= 55 && elapsedTime < 60 && goodNewsBufferRef.current.length === 0) {
@@ -146,7 +189,7 @@ export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMess
 
   // Add new message (FUD or good news)
   const addMessage = useCallback(() => {
-    const text = getNextMessage(isDiamondMode);
+    const text = getNextMessage(isDiamondMode, elapsedTime);
     const id = messageIdRef.current++;
 
     // Report the message to game state (strip emojis for NFT)
@@ -168,13 +211,18 @@ export const FudTicker = memo(function FudTicker({ isActive, elapsedTime, onMess
     setTimeout(() => {
       setMessages((prev) => prev.filter((m) => m.id !== id));
     }, duration * 1000);
-  }, [getNextMessage, onMessageShown, isDiamondMode]);
+  }, [getNextMessage, onMessageShown, isDiamondMode, elapsedTime]);
 
   // Initial FUD when game starts
   const hasStartedRef = useRef(false);
   useEffect(() => {
     if (isActive && !hasStartedRef.current) {
       hasStartedRef.current = true;
+      // パーソナライズドFUDを元データからコピー（再プレイ対応）
+      if (originalPersonalizedFudRef.current.length > 0) {
+        personalizedFudRef.current = [...originalPersonalizedFudRef.current];
+        console.log(`Personalized FUD ready: ${personalizedFudRef.current.length} messages`);
+      }
       addMessage();
     }
     if (!isActive) {
