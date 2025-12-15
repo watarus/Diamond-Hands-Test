@@ -10,17 +10,18 @@ const PRESENTATION_ID = "1Q3ixP0sp9yPqF6uIggMa6dfyovZqmZJUfjGPSVCLp0w";
 const CREDENTIALS_PATH = process.env.GOOGLE_CREDENTIALS_PATH || "./google-credentials.json";
 
 // HTMLファイル → Google Slideの位置（1-indexed）
-// スライド3は動画なのでスキップ
+// スライド5は動画なのでスキップ
 const slideMapping = [
   { file: "slide1-title.html", googleSlideIndex: 1 },
   { file: "slide8-author.html", googleSlideIndex: 2 },
-  // Google Slide 3 = 動画（手動追加、スキップ）
-  { file: "slide2-overview.html", googleSlideIndex: 4 },
-  { file: "slide3-onchain.html", googleSlideIndex: 5 },
-  { file: "slide4-ai.html", googleSlideIndex: 6 },
-  { file: "slide5-miniapp.html", googleSlideIndex: 7 },
-  { file: "slide6-techstack.html", googleSlideIndex: 8 },
-  { file: "slide7-demo.html", googleSlideIndex: 9 },
+  { file: "slide2-overview.html", googleSlideIndex: 3 },
+  { file: "slide-demo.html", googleSlideIndex: 4 },
+  // Google Slide 5 = 動画（手動追加、スキップ）
+  { file: "slide3-onchain.html", googleSlideIndex: 6 },
+  { file: "slide4-ai.html", googleSlideIndex: 7 },
+  { file: "slide5-miniapp.html", googleSlideIndex: 8 },
+  { file: "slide6-techstack.html", googleSlideIndex: 9 },
+  { file: "slide7-demo.html", googleSlideIndex: 10 },
 ];
 
 async function getAuthClient() {
@@ -93,29 +94,24 @@ async function getSlideIds(authClient) {
   }));
 }
 
-async function createNewSlides(authClient, count, afterSlideId) {
+async function createSlideAtIndex(authClient, insertionIndex) {
   const slides = google.slides({ version: "v1", auth: authClient });
-  const newSlideIds = [];
+  const newSlideId = `new_slide_${Date.now()}`;
 
-  for (let i = 0; i < count; i++) {
-    const newSlideId = `new_slide_${Date.now()}_${i}`;
-    const requests = [{
-      createSlide: {
-        objectId: newSlideId,
-        insertionIndex: afterSlideId ? undefined : i,
-      },
-    }];
+  const requests = [{
+    createSlide: {
+      objectId: newSlideId,
+      insertionIndex: insertionIndex, // 0-indexed
+    },
+  }];
 
-    await slides.presentations.batchUpdate({
-      presentationId: PRESENTATION_ID,
-      requestBody: { requests },
-    });
+  await slides.presentations.batchUpdate({
+    presentationId: PRESENTATION_ID,
+    requestBody: { requests },
+  });
 
-    newSlideIds.push(newSlideId);
-    console.log(`  Created new slide ${i + 1}`);
-  }
-
-  return newSlideIds;
+  console.log(`  Created new slide at position ${insertionIndex + 1}`);
+  return newSlideId;
 }
 
 async function updateSlideImage(authClient, slideId, imageUrl) {
@@ -194,8 +190,23 @@ Setup instructions:
 
     // Get existing slide IDs
     console.log("\nGetting slide structure...");
-    const slideInfo = await getSlideIds(authClient);
+    let slideInfo = await getSlideIds(authClient);
     console.log(`  Found ${slideInfo.length} slides`);
+
+    // Find max required slide index
+    const maxRequired = Math.max(...images.map(img => img.googleSlideIndex));
+
+    // Create missing slides if needed
+    if (slideInfo.length < maxRequired) {
+      const needed = maxRequired - slideInfo.length;
+      console.log(`\nCreating ${needed} new slide(s)...`);
+      for (let i = 0; i < needed; i++) {
+        await createSlideAtIndex(authClient, slideInfo.length + i);
+      }
+      // Refresh slide info
+      slideInfo = await getSlideIds(authClient);
+      console.log(`  Now have ${slideInfo.length} slides`);
+    }
 
     // Upload images to Vercel Blob
     console.log("\nUploading images to Vercel Blob...");

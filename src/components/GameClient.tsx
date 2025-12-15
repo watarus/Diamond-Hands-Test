@@ -112,7 +112,7 @@ function GameContent() {
       </header>
 
       {/* FUD Ticker (shown while holding) */}
-      <FudTicker isActive={gameState === "holding"} elapsedTime={elapsedTime} onMessageShown={addMessage} />
+      <FudTicker isActive={gameState === "holding"} elapsedTime={elapsedTime} onMessageShown={addMessage} walletAddress={address} />
 
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center min-h-screen p-4 pt-20">

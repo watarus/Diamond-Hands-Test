@@ -43,6 +43,8 @@ google-credentials.json
 /artifacts
 /typechain-types
 /broadcast
+/out
+/lib
 .env*
 
 # Logs
