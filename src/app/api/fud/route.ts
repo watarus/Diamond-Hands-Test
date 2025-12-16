@@ -46,12 +46,12 @@ async function generateFudBatch(): Promise<string[]> {
     return [...FALLBACK_FUDS];
   }
 
-  console.log("Generating 1000 FUDs from LLM...");
+  console.log("Generating 300 FUDs from LLM...");
 
   try {
     const allFuds: string[] = [];
 
-    // 10回に分けて100個ずつ生成（合計1000個）
+    // 10回に分けて30個ずつ生成（合計300個）
     for (let i = 0; i < 10; i++) {
       const completion = await openai.chat.completions.create({
         model: "x-ai/grok-4.1-fast",
@@ -59,9 +59,9 @@ async function generateFudBatch(): Promise<string[]> {
           { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
-            content: `仮想通貨の恐怖を煽るニュースヘッドラインを100個生成してください。
+            content: `仮想通貨の恐怖を煽るニュースヘッドラインを30個生成してください。
 それぞれ違う内容で、バラエティ豊かに。1行1ヘッドライン、番号不要。
-テーマ「${['価格暴落・市場崩壊系', '規制・法律・禁止系', 'ハッキング・セキュリティ・詐欺系', '取引所・企業倒産系', '技術障害・ネットワーク問題系', 'クジラ売却・大口投げ売り系', '著名人批判・否定発言系', 'ラグプル・スキャム系', '経済危機・リセッション系', '環境問題・エネルギー批判系'][i]}」を中心に100個お願いします。`
+テーマ「${['価格暴落・市場崩壊系', '規制・法律・禁止系', 'ハッキング・セキュリティ・詐欺系', '取引所・企業倒産系', '技術障害・ネットワーク問題系', 'クジラ売却・大口投げ売り系', '著名人批判・否定発言系', 'ラグプル・スキャム系', '経済危機・リセッション系', '環境問題・エネルギー批判系'][i]}」を中心に30個お願いします。`
           },
         ],
         max_tokens: 8000,

@@ -48,12 +48,12 @@ async function generateGoodNewsBatch(): Promise<string[]> {
     return [...FALLBACK_GOOD_NEWS];
   }
 
-  console.log("Generating 1000 good news from LLM...");
+  console.log("Generating 300 good news from LLM...");
 
   try {
     const allNews: string[] = [];
 
-    // 10回に分けて100個ずつ生成（合計1000個）
+    // 10回に分けて30個ずつ生成（合計300個）
     for (let i = 0; i < 10; i++) {
       const completion = await openai.chat.completions.create({
         model: "x-ai/grok-4.1-fast",
@@ -61,9 +61,9 @@ async function generateGoodNewsBatch(): Promise<string[]> {
           { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
-            content: `Diamond Handsを祝福するポジティブなニュースヘッドラインを100個生成してください。
+            content: `Diamond Handsを祝福するポジティブなニュースヘッドラインを30個生成してください。
 それぞれ違う内容で、バラエティ豊かに。1行1ヘッドライン、番号不要。
-テーマ「${['価格上昇・史上最高値系', '機関投資家・大企業参入系', 'プレイヤー称賛・握力系', '未来予想・ムーン系', 'コミュニティ・技術進歩系', '規制好転・法整備系', 'ETF・金融商品承認系', 'アダプション・普及系', '技術革新・アップグレード系', 'クジラ買い増し・著名人発言系'][i]}」を中心に100個お願いします。`
+テーマ「${['価格上昇・史上最高値系', '機関投資家・大企業参入系', 'プレイヤー称賛・握力系', '未来予想・ムーン系', 'コミュニティ・技術進歩系', '規制好転・法整備系', 'ETF・金融商品承認系', 'アダプション・普及系', '技術革新・アップグレード系', 'クジラ買い増し・著名人発言系'][i]}」を中心に30個お願いします。`
           },
         ],
         max_tokens: 8000,
