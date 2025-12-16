@@ -118,18 +118,17 @@ export function useMint() {
 
       console.log("[useMint] FUD for NFT:", fudForNft);
 
-      // Check if paymaster is supported
-      let supportsPaymaster = false;
+      // Log wallet capabilities for debugging (optional - doesn't affect paymaster)
       try {
         const capabilities = await getCapabilities(wagmiConfig, {
           account: playerAddress,
         });
-        const baseCapabilities = capabilities[base.id];
-        supportsPaymaster = baseCapabilities?.paymasterService?.supported ?? false;
-        console.log("[useMint] Paymaster supported:", supportsPaymaster);
+        console.log("[useMint] Wallet capabilities:", JSON.stringify(capabilities, null, 2));
       } catch (e) {
-        console.log("[useMint] Could not get capabilities, assuming no paymaster:", e);
+        console.log("[useMint] Could not get capabilities (this is OK):", e);
       }
+
+      console.log("[useMint] Paymaster URL configured:", !!PAYMASTER_URL);
 
       // Encode the mint function call
       const data = encodeFunctionData({
@@ -138,9 +137,9 @@ export function useMint() {
         args: [playerAddress, duration, fudForNft],
       });
 
-      console.log("[useMint] Sending calls with paymaster:", supportsPaymaster);
+      console.log("[useMint] Sending calls with paymaster capability");
 
-      // Send the call using EIP-5792
+      // Send the call using EIP-5792 - always include paymaster capability
       const result = await sendCalls(wagmiConfig, {
         account: playerAddress,
         calls: [
@@ -150,13 +149,11 @@ export function useMint() {
           },
         ],
         chainId: base.id,
-        capabilities: supportsPaymaster
-          ? {
-              paymasterService: {
-                url: PAYMASTER_URL,
-              },
-            }
-          : undefined,
+        capabilities: {
+          paymasterService: {
+            url: PAYMASTER_URL,
+          },
+        },
       });
 
       console.log("[useMint] Calls result:", result);
