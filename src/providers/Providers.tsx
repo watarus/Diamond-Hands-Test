@@ -10,7 +10,7 @@ import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 
 const queryClient = new QueryClient();
 
-const wagmiConfig = createConfig({
+export const wagmiConfig = createConfig({
   chains: [base],
   connectors: [
     // Farcaster connector - auto-connects in Farcaster/Warpcast
@@ -41,7 +41,7 @@ export function Providers({ children }: { children: ReactNode }) {
               mode: "dark",
               name: "Diamond Hands Test",
             },
-            paymaster: "https://api.developer.coinbase.com/rpc/v1/base/y6IvBlJtGwEMTYkHAWmRJZV3pc9TBl3D",
+            paymaster: `https://api.developer.coinbase.com/rpc/v1/base/${apiKey}`,
             wallet: {
               display: "modal",
             },
