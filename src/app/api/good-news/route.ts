@@ -130,6 +130,7 @@ async function saveToBlob(news: string[]): Promise<void> {
     await put(BLOB_FILENAME, JSON.stringify(data), {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
     console.log(`Good news blob saved: ${news.length} items`);
   } catch (error) {
