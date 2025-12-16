@@ -8,7 +8,7 @@ import { DIAMOND_HANDS_ADDRESS, DIAMOND_HANDS_ABI } from "@/lib/contracts";
 import { wagmiConfig } from "@/providers/Providers";
 import { base } from "wagmi/chains";
 
-const PAYMASTER_URL = `https://api.developer.coinbase.com/rpc/v1/base/${process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}`;
+const PAYMASTER_URL = `https://api.developer.coinbase.com/rpc/v1/base/${process.env.NEXT_PUBLIC_PAYMASTER_API_KEY}`;
 
 export function useMint() {
   const { address } = useAccount();

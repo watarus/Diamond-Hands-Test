@@ -29,6 +29,7 @@ export const wagmiConfig = createConfig({
 
 export function Providers({ children }: { children: ReactNode }) {
   const apiKey = process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY;
+  const paymasterKey = process.env.NEXT_PUBLIC_PAYMASTER_API_KEY;
 
   return (
     <WagmiProvider config={wagmiConfig}>
@@ -41,7 +42,7 @@ export function Providers({ children }: { children: ReactNode }) {
               mode: "dark",
               name: "Diamond Hands Test",
             },
-            paymaster: `https://api.developer.coinbase.com/rpc/v1/base/${apiKey}`,
+            paymaster: `https://api.developer.coinbase.com/rpc/v1/base/${paymasterKey}`,
             wallet: {
               display: "modal",
             },
