@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAccount } from "wagmi";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, decodeEventLog } from "viem";
 import { sendCalls, getCallsStatus, getCapabilities } from "@wagmi/core";
 import { DIAMOND_HANDS_ADDRESS, DIAMOND_HANDS_ABI } from "@/lib/contracts";
 import { wagmiConfig } from "@/providers/Providers";
@@ -37,19 +37,24 @@ export function useMint() {
           if (status.receipts && status.receipts.length > 0) {
             setHash(status.receipts[0].transactionHash);
 
-            // Parse tokenId from logs
+            // Parse tokenId from logs using proper event decoding
             for (const receipt of status.receipts) {
               for (const log of receipt.logs) {
-                // Check for DiamondHandsMinted or PaperHandsMinted events
-                // Event signature for DiamondHandsMinted(address,uint256,uint256)
-                const diamondTopic = "0x" + "DiamondHandsMinted".padEnd(64, "0"); // simplified
-                if (log.topics[0]?.includes("Minted")) {
-                  // tokenId is usually the second indexed param
-                  const tokenIdHex = log.topics[2];
-                  if (tokenIdHex) {
-                    setTokenId(BigInt(tokenIdHex));
-                    console.log("[useMint] TokenId:", BigInt(tokenIdHex).toString());
+                try {
+                  const decoded = decodeEventLog({
+                    abi: DIAMOND_HANDS_ABI,
+                    data: log.data,
+                    topics: log.topics as [signature: `0x${string}`, ...args: `0x${string}`[]],
+                  });
+
+                  // Check for DiamondHandsMinted or PaperHandsMinted events
+                  if (decoded.eventName === "DiamondHandsMinted" || decoded.eventName === "PaperHandsMinted") {
+                    const args = decoded.args as { player: string; tokenId: bigint; duration: bigint };
+                    setTokenId(args.tokenId);
+                    console.log("[useMint] TokenId:", args.tokenId.toString());
                   }
+                } catch {
+                  // Not our event, skip
                 }
               }
             }
@@ -80,6 +85,7 @@ export function useMint() {
       playerAddress,
       durationSeconds,
       fudMessagesCount: fudMessages.length,
+      fudMessagesSample: fudMessages.slice(0, 3),
     });
 
     setIsPending(true);

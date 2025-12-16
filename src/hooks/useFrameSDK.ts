@@ -71,7 +71,7 @@ export function useFrameSDK() {
         hasSDKContext = !!ctx;
         console.log("[SDK] Context:", ctx);
 
-        // サーバーに送信してVercelログで確認
+        // Send to server for Vercel log verification
         if (ctx) {
           fetch("/api/debug/context", {
             method: "POST",
@@ -82,7 +82,7 @@ export function useFrameSDK() {
               isInIframe: window.parent !== window,
               timestamp: new Date().toISOString(),
             }),
-          }).catch(() => {});
+          }).catch((e) => console.error("[SDK] Failed to send context:", e));
         }
       } catch {
         console.log("[SDK] Not in mini app context");
