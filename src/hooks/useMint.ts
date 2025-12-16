@@ -24,9 +24,16 @@ export function useMint() {
   useEffect(() => {
     if (!callsId) return;
 
+    let isCancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const pollStatus = async () => {
+      if (isCancelled) return;
+
       try {
         const status = await getCallsStatus(wagmiConfig, { id: callsId });
+        if (isCancelled) return;
+
         console.log("[useMint] Calls status:", status);
 
         if (status.status === "success") {
@@ -64,16 +71,25 @@ export function useMint() {
 
         if (status.status === "pending") {
           setIsConfirming(true);
-          // Continue polling
-          setTimeout(pollStatus, 2000);
+          // Continue polling with cleanup tracking
+          timeoutId = setTimeout(pollStatus, 2000);
         }
       } catch (e) {
+        if (isCancelled) return;
         console.error("[useMint] Poll error:", e);
         setError(e as Error);
       }
     };
 
     pollStatus();
+
+    // Cleanup function to prevent memory leaks and race conditions
+    return () => {
+      isCancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [callsId]);
 
   const mint = useCallback(async (
