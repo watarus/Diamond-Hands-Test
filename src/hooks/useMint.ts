@@ -13,6 +13,44 @@ const PAYMASTER_URL = `https://api.developer.coinbase.com/rpc/v1/base/${process.
 export function useMint() {
   const { address } = useAccount();
   const [callsId, setCallsId] = useState<string | null>(null);
+  const [hasLoggedCapabilities, setHasLoggedCapabilities] = useState(false);
+
+  // Log wallet capabilities to server when connected
+  useEffect(() => {
+    if (!address || hasLoggedCapabilities) return;
+
+    const logCapabilities = async () => {
+      try {
+        const capabilities = await getCapabilities(wagmiConfig, {
+          account: address,
+        });
+
+        const baseCapabilities = capabilities[base.id];
+        const supportsPaymaster = !!baseCapabilities?.paymasterService?.supported;
+
+        console.log("[useMint] Wallet capabilities:", capabilities);
+        console.log("[useMint] Supports paymaster:", supportsPaymaster);
+
+        // Send to server for logging
+        fetch("/api/debug/paymaster", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account: address,
+            capabilities,
+            supportsPaymaster,
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch((e) => console.error("[useMint] Failed to send capabilities:", e));
+
+        setHasLoggedCapabilities(true);
+      } catch (e) {
+        console.log("[useMint] Could not get capabilities:", e);
+      }
+    };
+
+    logCapabilities();
+  }, [address, hasLoggedCapabilities]);
   const [tokenId, setTokenId] = useState<bigint | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
