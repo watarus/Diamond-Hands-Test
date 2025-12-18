@@ -38,6 +38,12 @@ const FUD_POSITIONS = [
   { x: 925, y: 480 },
 ];
 
+// Strip emoji variation selectors that cause font loading issues
+function sanitizeMessage(msg: string): string {
+  // Remove variation selectors (U+FE00 to U+FE0F)
+  return msg.replace(/[\uFE00-\uFE0F]/g, "");
+}
+
 // Fetch messages from contract tokenURI (works for both FUD and Good News)
 async function getMessagesFromContract(tokenId: string): Promise<string[]> {
   try {
@@ -65,7 +71,7 @@ async function getMessagesFromContract(tokenId: string): Promise<string[]> {
     if (json.attributes) {
       for (const attr of json.attributes) {
         if (attr.trait_type?.startsWith("FUD ") || attr.trait_type?.startsWith("Good News ")) {
-          messages.push(attr.value);
+          messages.push(sanitizeMessage(attr.value));
         }
       }
     }
@@ -89,6 +95,9 @@ export async function GET(request: Request) {
     messages = await getMessagesFromContract(tokenId);
   }
 
+  // Load font for Japanese text
+  const fontData = await loadFont();
+
   // Default OG image (no result)
   if (!duration) {
     return new ImageResponse(
@@ -102,7 +111,7 @@ export async function GET(request: Request) {
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: "#0a0a0a",
-            fontFamily: "sans-serif",
+            fontFamily: "Noto Sans JP, sans-serif",
           }}
         >
           <div style={{ fontSize: 120, marginBottom: 20 }}>💎🙌</div>
@@ -140,6 +149,13 @@ export async function GET(request: Request) {
       {
         width: 1200,
         height: 630,
+        fonts: [
+          {
+            name: "Noto Sans JP",
+            data: fontData,
+            style: "normal",
+          },
+        ],
       }
     );
   }
@@ -241,7 +257,7 @@ export async function GET(request: Request) {
         fonts: [
           {
             name: "Noto Sans JP",
-            data: await loadFont(),
+            data: fontData,
             style: "normal",
           },
         ],
@@ -261,7 +277,7 @@ export async function GET(request: Request) {
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#0a0a0a",
-          fontFamily: "sans-serif",
+          fontFamily: "Noto Sans JP, sans-serif",
         }}
       >
         <div style={{ fontSize: 100, marginBottom: 20 }}>
@@ -310,6 +326,13 @@ export async function GET(request: Request) {
     {
       width: 1200,
       height: 630,
+      fonts: [
+        {
+          name: "Noto Sans JP",
+          data: fontData,
+          style: "normal",
+        },
+      ],
     }
   );
 }
