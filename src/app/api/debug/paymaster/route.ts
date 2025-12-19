@@ -9,17 +9,23 @@ const ENTRYPOINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const supportsPaymaster = body.supportsPaymaster;
 
     console.log("[Paymaster Debug] ====== WALLET CAPABILITIES ======");
     console.log("[Paymaster Debug] Account:", body.account);
-    console.log("[Paymaster Debug] Supports paymasterService:", supportsPaymaster);
-    console.log("[Paymaster Debug] Full capabilities:", JSON.stringify(body.capabilities, null, 2));
+    console.log("[Paymaster Debug] Timestamp:", body.timestamp);
+
+    if (body.error) {
+      console.log("[Paymaster Debug] ERROR getting capabilities:", body.error);
+      console.log("[Paymaster Debug] Supports paymasterService: UNKNOWN (error)");
+    } else {
+      console.log("[Paymaster Debug] Supports paymasterService:", body.supportsPaymaster);
+      console.log("[Paymaster Debug] Full capabilities:", JSON.stringify(body.capabilities, null, 2));
+    }
     console.log("[Paymaster Debug] ================================");
 
     return NextResponse.json({
       received: true,
-      walletSupportsPaymaster: supportsPaymaster,
+      walletSupportsPaymaster: body.supportsPaymaster,
     });
   } catch (error) {
     console.error("[Paymaster Debug] POST error:", error);

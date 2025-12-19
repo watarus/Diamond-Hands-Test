@@ -62,8 +62,11 @@ function GameContent() {
   useEffect(() => {
     if (!address || hasLoggedCapabilities.current) return;
 
+    console.log("[Wallet] Address connected:", address);
+
     const logCapabilities = async () => {
       try {
+        console.log("[Wallet] Getting capabilities...");
         const capabilities = await getCapabilities(wagmiConfig, {
           account: address,
         });
@@ -88,7 +91,19 @@ function GameContent() {
 
         hasLoggedCapabilities.current = true;
       } catch (e) {
-        console.log("[Wallet] Could not get capabilities:", e);
+        console.error("[Wallet] Could not get capabilities:", e);
+        // Send error to server for logging
+        fetch("/api/debug/paymaster", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account: address,
+            error: e instanceof Error ? e.message : String(e),
+            supportsPaymaster: "unknown",
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+        hasLoggedCapabilities.current = true;
       }
     };
 
