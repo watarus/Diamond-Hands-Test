@@ -4,10 +4,17 @@ import OpenAI from "openai";
 const ALCHEMY_BASE_URL = `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 const ALCHEMY_NFT_URL = `https://base-mainnet.g.alchemy.com/nft/v3/${process.env.ALCHEMY_API_KEY}`;
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+// Lazy initialization to avoid build-time errors
+let openaiClient: OpenAI | null = null;
+function getOpenAI() {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 interface WalletContext {
   ethBalance: string | null;  // null = 取得失敗
@@ -144,7 +151,7 @@ async function generatePersonalizedFud(context: WalletContext): Promise<string[]
   const contextDescription = `プレイヤーのウォレット情報:\n${contextLines.join("\n")}`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "x-ai/grok-4.1-fast",
       messages: [
         {

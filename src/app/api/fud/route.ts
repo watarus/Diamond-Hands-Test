@@ -4,10 +4,17 @@ import OpenAI from "openai";
 import { put, list } from "@vercel/blob";
 import { FALLBACK_FUDS } from "@/lib/fallback-fuds";
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+// Lazy initialization to avoid build-time errors
+let openaiClient: OpenAI | null = null;
+function getOpenAI() {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 const SYSTEM_PROMPT = `あなたは仮想通貨市場の悲観的なニュースヘッドラインを生成する専門家です。
 以下のルールに従ってください：
@@ -53,7 +60,7 @@ async function generateFudBatch(): Promise<string[]> {
 
     // 10回に分けて30個ずつ生成（合計300個）
     for (let i = 0; i < 10; i++) {
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "x-ai/grok-4.1-fast",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
