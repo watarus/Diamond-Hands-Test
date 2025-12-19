@@ -5,30 +5,39 @@ const PAYMASTER_URL = `https://api.developer.coinbase.com/rpc/v1/base/${process.
 // ERC-4337 EntryPoint v0.6 on Base
 const ENTRYPOINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
 
-// POST: Receive wallet capabilities from client
+// POST: Receive wallet state/capabilities from client
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const type = body.type || "unknown";
 
-    console.log("[Paymaster Debug] ====== WALLET CAPABILITIES ======");
-    console.log("[Paymaster Debug] Account:", body.account);
-    console.log("[Paymaster Debug] Timestamp:", body.timestamp);
-
-    if (body.error) {
-      console.log("[Paymaster Debug] ERROR getting capabilities:", body.error);
-      console.log("[Paymaster Debug] Supports paymasterService: UNKNOWN (error)");
+    if (type === "wallet_state") {
+      console.log("[Wallet Debug] ====== WALLET STATE ======");
+      console.log("[Wallet Debug] Address:", body.address);
+      console.log("[Wallet Debug] isConnected:", body.isConnected);
+      console.log("[Wallet Debug] hasLoggedCapabilities:", body.hasLoggedCapabilities);
+      console.log("[Wallet Debug] ===========================");
+    } else if (type === "capabilities") {
+      console.log("[Wallet Debug] ====== WALLET CAPABILITIES ======");
+      console.log("[Wallet Debug] Account:", body.account);
+      console.log("[Wallet Debug] Supports paymasterService:", body.supportsPaymaster);
+      console.log("[Wallet Debug] Full capabilities:", JSON.stringify(body.capabilities, null, 2));
+      console.log("[Wallet Debug] ==================================");
+    } else if (type === "capabilities_error") {
+      console.log("[Wallet Debug] ====== CAPABILITIES ERROR ======");
+      console.log("[Wallet Debug] Account:", body.account);
+      console.log("[Wallet Debug] Error:", body.error);
+      console.log("[Wallet Debug] =================================");
     } else {
-      console.log("[Paymaster Debug] Supports paymasterService:", body.supportsPaymaster);
-      console.log("[Paymaster Debug] Full capabilities:", JSON.stringify(body.capabilities, null, 2));
+      console.log("[Wallet Debug] Unknown type:", type, body);
     }
-    console.log("[Paymaster Debug] ================================");
 
     return NextResponse.json({
       received: true,
-      walletSupportsPaymaster: body.supportsPaymaster,
+      type,
     });
   } catch (error) {
-    console.error("[Paymaster Debug] POST error:", error);
+    console.error("[Wallet Debug] POST error:", error);
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }

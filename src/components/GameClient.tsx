@@ -60,13 +60,23 @@ function GameContent() {
 
   // Log wallet capabilities when connected
   useEffect(() => {
-    if (!address || hasLoggedCapabilities.current) return;
+    // Always send wallet state to server for debugging
+    fetch("/api/debug/paymaster", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "wallet_state",
+        address: address || null,
+        isConnected,
+        hasLoggedCapabilities: hasLoggedCapabilities.current,
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {});
 
-    console.log("[Wallet] Address connected:", address);
+    if (!address || hasLoggedCapabilities.current) return;
 
     const logCapabilities = async () => {
       try {
-        console.log("[Wallet] Getting capabilities...");
         const capabilities = await getCapabilities(wagmiConfig, {
           account: address,
         });
@@ -74,29 +84,27 @@ function GameContent() {
         const baseCapabilities = capabilities[base.id];
         const supportsPaymaster = !!baseCapabilities?.paymasterService?.supported;
 
-        console.log("[Wallet] Capabilities:", capabilities);
-        console.log("[Wallet] Supports paymaster:", supportsPaymaster);
-
         // Send to server for logging
         fetch("/api/debug/paymaster", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            type: "capabilities",
             account: address,
             capabilities,
             supportsPaymaster,
             timestamp: new Date().toISOString(),
           }),
-        }).catch((e) => console.error("[Wallet] Failed to send capabilities:", e));
+        }).catch(() => {});
 
         hasLoggedCapabilities.current = true;
       } catch (e) {
-        console.error("[Wallet] Could not get capabilities:", e);
         // Send error to server for logging
         fetch("/api/debug/paymaster", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            type: "capabilities_error",
             account: address,
             error: e instanceof Error ? e.message : String(e),
             supportsPaymaster: "unknown",
@@ -108,7 +116,7 @@ function GameContent() {
     };
 
     logCapabilities();
-  }, [address]);
+  }, [address, isConnected]);
 
   const {
     gameState,
