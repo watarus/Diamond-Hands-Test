@@ -62,15 +62,6 @@ export function useFrameSDK() {
         console.log("[Platform] Failed to fetch debug headers:", e);
       }
 
-      // Check paymaster configuration
-      try {
-        const paymasterRes = await fetch("/api/debug/paymaster");
-        const paymasterData = await paymasterRes.json();
-        console.log("[Paymaster] Server-side check:", paymasterData);
-      } catch (e) {
-        console.log("[Paymaster] Failed to fetch paymaster debug:", e);
-      }
-
       // Try to get SDK context first
       let ctx: SDKContext | null = null;
       let hasSDKContext = false;
