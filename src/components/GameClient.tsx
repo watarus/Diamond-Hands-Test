@@ -2,7 +2,10 @@
 
 import { useAccount } from "wagmi";
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { getCapabilities } from "@wagmi/core";
+import { wagmiConfig } from "@/providers/Providers";
+import { base } from "wagmi/chains";
 import { useGame } from "@/hooks/useGame";
 import { useFrameSDK } from "@/hooks/useFrameSDK";
 import { HoldButton } from "@/components/HoldButton";
@@ -53,6 +56,45 @@ function GameContent() {
   const searchParams = useSearchParams();
   const isSharedView = searchParams.get("shared") === "true";
   const [showGame, setShowGame] = useState(false);
+  const hasLoggedCapabilities = useRef(false);
+
+  // Log wallet capabilities when connected
+  useEffect(() => {
+    if (!address || hasLoggedCapabilities.current) return;
+
+    const logCapabilities = async () => {
+      try {
+        const capabilities = await getCapabilities(wagmiConfig, {
+          account: address,
+        });
+
+        const baseCapabilities = capabilities[base.id];
+        const supportsPaymaster = !!baseCapabilities?.paymasterService?.supported;
+
+        console.log("[Wallet] Capabilities:", capabilities);
+        console.log("[Wallet] Supports paymaster:", supportsPaymaster);
+
+        // Send to server for logging
+        fetch("/api/debug/paymaster", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account: address,
+            capabilities,
+            supportsPaymaster,
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch((e) => console.error("[Wallet] Failed to send capabilities:", e));
+
+        hasLoggedCapabilities.current = true;
+      } catch (e) {
+        console.log("[Wallet] Could not get capabilities:", e);
+      }
+    };
+
+    logCapabilities();
+  }, [address]);
+
   const {
     gameState,
     elapsedTime,
