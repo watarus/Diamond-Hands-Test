@@ -10,6 +10,16 @@ import { base } from "wagmi/chains";
 const PAYMASTER_URL = `https://api.developer.coinbase.com/rpc/v1/base/${process.env.NEXT_PUBLIC_PAYMASTER_API_KEY}`;
 const MAX_POLL_DURATION_MS = 5 * 60 * 1000; // 5 minutes timeout
 
+// Fisher-Yates shuffle for unbiased random selection
+function shuffleArray<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export function useMint() {
   const [callsId, setCallsId] = useState<string | null>(null);
   const [tokenId, setTokenId] = useState<bigint | null>(null);
@@ -56,11 +66,21 @@ export function useMint() {
             // Parse tokenId from logs using proper event decoding
             for (const receipt of status.receipts) {
               for (const log of receipt.logs) {
+                // Validate topics structure before type assertion
+                const topics = log.topics;
+                if (
+                  !Array.isArray(topics) ||
+                  topics.length === 0 ||
+                  !topics.every((t) => typeof t === "string" && t.startsWith("0x"))
+                ) {
+                  continue;
+                }
+
                 try {
                   const decoded = decodeEventLog({
                     abi: DIAMOND_HANDS_ABI,
                     data: log.data,
-                    topics: log.topics as [signature: `0x${string}`, ...args: `0x${string}`[]],
+                    topics: topics as [signature: `0x${string}`, ...args: `0x${string}`[]],
                   });
 
                   // Check for DiamondHandsMinted or PaperHandsMinted events
@@ -161,9 +181,10 @@ export function useMint() {
         }).catch(() => {});
       }
 
+      // Floor to whole seconds since timer has sub-second precision
       const duration = BigInt(Math.floor(durationSeconds));
-      // Select up to 12 messages for the NFT
-      const shuffled = [...messages].sort(() => Math.random() - 0.5);
+      // Select up to 12 messages for the NFT using Fisher-Yates shuffle
+      const shuffled = shuffleArray(messages);
       const messagesForNft = shuffled.slice(0, 12);
 
       console.log("[useMint] Messages for NFT:", messagesForNft.length);

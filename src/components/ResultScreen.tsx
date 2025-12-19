@@ -9,6 +9,30 @@ import { useComposeCast } from "@coinbase/onchainkit/minikit";
 
 type Platform = "base" | "farcaster" | "browser";
 
+// Map technical errors to user-friendly messages
+function getFriendlyErrorMessage(error: Error): string {
+  const message = error.message.toLowerCase();
+
+  if (message.includes("user rejected") || message.includes("user denied")) {
+    return "トランザクションがキャンセルされました";
+  }
+  if (message.includes("insufficient funds") || message.includes("insufficient balance")) {
+    return "ガス代が不足しています。ETHを追加してください";
+  }
+  if (message.includes("network") || message.includes("connection")) {
+    return "ネットワークエラーが発生しました。再試行してください";
+  }
+  if (message.includes("timeout")) {
+    return "タイムアウトしました。ウォレットを確認してください";
+  }
+  if (message.includes("no account")) {
+    return "ウォレットが接続されていません";
+  }
+
+  // For unknown errors, show a generic message
+  return "エラーが発生しました。再試行してください";
+}
+
 // Share Button Component
 function ShareButton({
   shareTarget,
@@ -225,7 +249,7 @@ export function ResultScreen({
     error: mintError,
   } = useMint();
 
-  const tokenId = mintedTokenId?.toString();
+  const tokenIdString = mintedTokenId?.toString();
   const minutes = Math.floor(duration / 60);
   const seconds = Math.floor(duration % 60);
 
@@ -325,7 +349,7 @@ export function ResultScreen({
 
         {mintError && (
           <p className="text-red-500 text-sm">
-            Error: {mintError.message}
+            {getFriendlyErrorMessage(mintError)}
           </p>
         )}
 
@@ -353,7 +377,7 @@ export function ResultScreen({
               duration={duration}
               isDiamondHands={isDiamondHands}
               isMinted={isMinted}
-              tokenId={tokenId}
+              tokenId={tokenIdString}
               currentPlatform={platform}
             />
             <ShareButton
@@ -361,7 +385,7 @@ export function ResultScreen({
               duration={duration}
               isDiamondHands={isDiamondHands}
               isMinted={isMinted}
-              tokenId={tokenId}
+              tokenId={tokenIdString}
               currentPlatform={platform}
             />
           </div>
