@@ -119,8 +119,29 @@ export function useMint() {
         const baseCapabilities = capabilities[base.id];
         supportsPaymaster = !!baseCapabilities?.paymasterService?.supported;
         console.log("[useMint] Paymaster supported:", supportsPaymaster);
+
+        // Send to server for logging
+        fetch("/api/debug/mint", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "capabilities",
+            account,
+            supportsPaymaster,
+            capabilities: baseCapabilities,
+          }),
+        }).catch(() => {});
       } catch (e) {
         console.log("[useMint] Could not get capabilities:", e);
+        fetch("/api/debug/mint", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "capabilities_error",
+            account,
+            error: e instanceof Error ? e.message : String(e),
+          }),
+        }).catch(() => {});
       }
 
       const duration = BigInt(Math.floor(durationSeconds));
