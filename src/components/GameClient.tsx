@@ -2,10 +2,7 @@
 
 import { useAccount } from "wagmi";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef, Suspense } from "react";
-import { getCapabilities } from "@wagmi/core";
-import { wagmiConfig } from "@/providers/Providers";
-import { base } from "wagmi/chains";
+import { useState, Suspense } from "react";
 import { useGame } from "@/hooks/useGame";
 import { useFrameSDK } from "@/hooks/useFrameSDK";
 import { HoldButton } from "@/components/HoldButton";
@@ -56,67 +53,6 @@ function GameContent() {
   const searchParams = useSearchParams();
   const isSharedView = searchParams.get("shared") === "true";
   const [showGame, setShowGame] = useState(false);
-  const hasLoggedCapabilities = useRef(false);
-
-  // Log wallet capabilities when connected
-  useEffect(() => {
-    // Always send wallet state to server for debugging
-    fetch("/api/debug/paymaster", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "wallet_state",
-        address: address || null,
-        isConnected,
-        hasLoggedCapabilities: hasLoggedCapabilities.current,
-        timestamp: new Date().toISOString(),
-      }),
-    }).catch(() => {});
-
-    if (!address || hasLoggedCapabilities.current) return;
-
-    const logCapabilities = async () => {
-      try {
-        const capabilities = await getCapabilities(wagmiConfig, {
-          account: address,
-        });
-
-        const baseCapabilities = capabilities[base.id];
-        const supportsPaymaster = !!baseCapabilities?.paymasterService?.supported;
-
-        // Send to server for logging
-        fetch("/api/debug/paymaster", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "capabilities",
-            account: address,
-            capabilities,
-            supportsPaymaster,
-            timestamp: new Date().toISOString(),
-          }),
-        }).catch(() => {});
-
-        hasLoggedCapabilities.current = true;
-      } catch (e) {
-        // Send error to server for logging
-        fetch("/api/debug/paymaster", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "capabilities_error",
-            account: address,
-            error: e instanceof Error ? e.message : String(e),
-            supportsPaymaster: "unknown",
-            timestamp: new Date().toISOString(),
-          }),
-        }).catch(() => {});
-        hasLoggedCapabilities.current = true;
-      }
-    };
-
-    logCapabilities();
-  }, [address, isConnected]);
 
   const {
     gameState,

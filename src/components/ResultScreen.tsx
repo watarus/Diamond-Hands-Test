@@ -1,23 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import {
-  Transaction,
-  TransactionButton,
-} from "@coinbase/onchainkit/transaction";
-import type { LifecycleStatus } from "@coinbase/onchainkit/transaction";
-import type { ContractFunctionParameters } from "viem";
-import { decodeEventLog } from "viem";
+import { useState, useEffect } from "react";
 import type { GameResult } from "@/hooks/useGame";
-import { DIAMOND_HANDS_ADDRESS, DIAMOND_HANDS_ABI } from "@/lib/contracts";
+import { useMint } from "@/hooks/useMint";
+import { DIAMOND_HANDS_ADDRESS } from "@/lib/contracts";
 import { sdk } from "@farcaster/miniapp-sdk";
-import { base } from "wagmi/chains";
-import { Attribution } from "ox/erc8021";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
-
-// Builder Code for Base attribution
-const BUILDER_CODE = "bc_vctya6xa";
-const dataSuffix = Attribution.toDataSuffix({ codes: [BUILDER_CODE] });
 
 type Platform = "base" | "farcaster" | "browser";
 
@@ -224,11 +212,20 @@ export function ResultScreen({
   platform,
 }: ResultScreenProps) {
   const { duration, isDiamondHands, messages } = result;
-  const [isMinted, setIsMinted] = useState(false);
-  const [txHash, setTxHash] = useState<string | undefined>();
-  const [tokenId, setTokenId] = useState<string | undefined>();
   const [supplementedMessages, setSupplementedMessages] = useState<string[]>(messages);
 
+  // Use the mint hook for sendCalls with paymaster support
+  const {
+    mint,
+    hash: txHash,
+    tokenId: mintedTokenId,
+    isPending,
+    isConfirming,
+    isConfirmed: isMinted,
+    error: mintError,
+  } = useMint();
+
+  const tokenId = mintedTokenId?.toString();
   const minutes = Math.floor(duration / 60);
   const seconds = Math.floor(duration % 60);
 
@@ -258,69 +255,9 @@ export function ResultScreen({
     }
   }, [messages, isDiamondHands]);
 
-  // Build contract calls for minting
-  const contracts = useMemo(() => {
-    if (!address) return [];
-
-    // Select 12 random messages for the NFT (FUD for Paper, Good News for Diamond)
-    const shuffled = [...supplementedMessages].sort(() => Math.random() - 0.5);
-    const messagesForNft = shuffled.slice(0, 12);
-
-    console.log("[Mint] Total messages collected:", supplementedMessages.length);
-    console.log("[Mint] Messages for NFT:", messagesForNft);
-
-    const contractCall = {
-      address: DIAMOND_HANDS_ADDRESS,
-      abi: DIAMOND_HANDS_ABI,
-      functionName: "mint",
-      args: [address, BigInt(Math.floor(duration)), messagesForNft],
-    };
-
-    console.log("[Mint] Contract call:", {
-      address: contractCall.address,
-      functionName: contractCall.functionName,
-      args: {
-        player: address,
-        duration: Math.floor(duration),
-        messages: messagesForNft,
-      },
-    });
-
-    return [contractCall] as ContractFunctionParameters[];
-  }, [address, duration, supplementedMessages]);
-
-  const handleOnStatus = (status: LifecycleStatus) => {
-    console.log("[Transaction] Status:", status.statusName, status.statusData);
-    if (status.statusName === "error") {
-      console.error("[Transaction] Error details:", status.statusData);
-    }
-    if (status.statusName === "success") {
-      setIsMinted(true);
-      const receipt = status.statusData?.transactionReceipts?.[0];
-      if (receipt?.transactionHash) {
-        setTxHash(receipt.transactionHash);
-      }
-      // Parse tokenId from transaction logs
-      if (receipt?.logs) {
-        for (const log of receipt.logs) {
-          try {
-            const decoded = decodeEventLog({
-              abi: DIAMOND_HANDS_ABI,
-              data: log.data,
-              topics: log.topics,
-            });
-            if (decoded.eventName === "DiamondHandsMinted" || decoded.eventName === "PaperHandsMinted") {
-              const args = decoded.args as { tokenId: bigint };
-              setTokenId(args.tokenId.toString());
-              console.log("[Transaction] TokenId:", args.tokenId.toString());
-              break;
-            }
-          } catch {
-            // Not our event, skip
-          }
-        }
-      }
-    }
+  const handleMint = async () => {
+    if (!address) return;
+    await mint(address, duration, supplementedMessages);
   };
 
   return (
@@ -364,24 +301,32 @@ export function ResultScreen({
       {/* Actions */}
       <div className="flex flex-col gap-4 w-full max-w-xs">
         {!isMinted && isConnected && address && (
-          <Transaction
-            chainId={base.id}
-            calls={contracts}
-            onStatus={handleOnStatus}
-            isSponsored={true}
-            capabilities={{ dataSuffix } as Record<string, unknown>}
+          <button
+            onClick={handleMint}
+            disabled={isPending || isConfirming}
+            className={`
+              px-8 py-4 rounded-xl font-bold text-lg w-full
+              ${isDiamondHands
+                ? "bg-diamond text-black hover:bg-diamond/80"
+                : "bg-paper text-black hover:bg-paper/80"
+              }
+              ${(isPending || isConfirming) ? "opacity-50 cursor-not-allowed" : ""}
+            `}
           >
-            <TransactionButton
-              text={isDiamondHands ? "Mint Diamond Hands NFT 💎" : "Mint Paper Hands SBT 📄"}
-              className={`
-                px-8 py-4 rounded-xl font-bold text-lg w-full
-                ${isDiamondHands
-                  ? "bg-diamond text-black hover:bg-diamond/80"
-                  : "bg-paper text-black hover:bg-paper/80"
-                }
-              `}
-            />
-          </Transaction>
+            {isPending
+              ? "Waiting for wallet..."
+              : isConfirming
+              ? "Confirming..."
+              : isDiamondHands
+              ? "Mint Diamond Hands NFT 💎"
+              : "Mint Paper Hands SBT 📄"}
+          </button>
+        )}
+
+        {mintError && (
+          <p className="text-red-500 text-sm">
+            Error: {mintError.message}
+          </p>
         )}
 
         {!isMinted && !isConnected && (
