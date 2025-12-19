@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { encodeFunctionData, decodeEventLog } from "viem";
 import { sendCalls, getCallsStatus, getCapabilities, getAccount } from "@wagmi/core";
 import { DIAMOND_HANDS_ADDRESS, DIAMOND_HANDS_ABI } from "@/lib/contracts";
@@ -9,9 +8,9 @@ import { wagmiConfig } from "@/providers/Providers";
 import { base } from "wagmi/chains";
 
 const PAYMASTER_URL = `https://api.developer.coinbase.com/rpc/v1/base/${process.env.NEXT_PUBLIC_PAYMASTER_API_KEY}`;
+const MAX_POLL_DURATION_MS = 5 * 60 * 1000; // 5 minutes timeout
 
 export function useMint() {
-  const { address } = useAccount();
   const [callsId, setCallsId] = useState<string | null>(null);
   const [tokenId, setTokenId] = useState<bigint | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -19,6 +18,7 @@ export function useMint() {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hash, setHash] = useState<`0x${string}` | undefined>(undefined);
+  const pollStartTime = useRef<number>(0);
 
   // Poll for transaction status when we have a callsId
   useEffect(() => {
@@ -26,9 +26,18 @@ export function useMint() {
 
     let isCancelled = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    pollStartTime.current = Date.now();
 
     const pollStatus = async () => {
       if (isCancelled) return;
+
+      // Check for timeout
+      if (Date.now() - pollStartTime.current > MAX_POLL_DURATION_MS) {
+        console.error("[useMint] Polling timed out after 5 minutes");
+        setIsConfirming(false);
+        setError(new Error("Transaction confirmation timed out. Please check your wallet."));
+        return;
+      }
 
       try {
         const status = await getCallsStatus(wagmiConfig, { id: callsId });
@@ -61,7 +70,7 @@ export function useMint() {
                     console.log("[useMint] TokenId:", args.tokenId.toString());
                   }
                 } catch {
-                  // Not our event, skip
+                  // Not our event (different contract), skip silently
                 }
               }
             }
@@ -73,10 +82,16 @@ export function useMint() {
           setIsConfirming(true);
           // Continue polling with cleanup tracking
           timeoutId = setTimeout(pollStatus, 2000);
+        } else {
+          // Handle failed or other status
+          console.error("[useMint] Transaction failed with status:", status.status);
+          setIsConfirming(false);
+          setError(new Error(`Transaction failed: ${status.status}`));
         }
       } catch (e) {
         if (isCancelled) return;
         console.error("[useMint] Poll error:", e);
+        setIsConfirming(false);
         setError(e as Error);
       }
     };
@@ -102,8 +117,10 @@ export function useMint() {
     setIsPending(true);
     setError(null);
     setIsConfirmed(false);
+    setIsConfirming(false);
     setTokenId(null);
     setHash(undefined);
+    setCallsId(null); // Reset to prevent stale polling
 
     try {
       // Get account from wagmi
