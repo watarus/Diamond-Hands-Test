@@ -156,6 +156,9 @@ export async function GET(request: Request) {
             style: "normal",
           },
         ],
+        headers: {
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
       }
     );
   }
@@ -261,6 +264,9 @@ export async function GET(request: Request) {
             style: "normal",
           },
         ],
+        headers: {
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
       }
     );
   }
@@ -333,6 +339,9 @@ export async function GET(request: Request) {
           style: "normal",
         },
       ],
+      headers: {
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
     }
   );
 }
